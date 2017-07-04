@@ -1,4 +1,4 @@
 <resources>
     <string name="app_name">HandsFreeListening</string>
-    <string name="action_settings">Settings</string>
+    <string name="menu_main_action1">Spectrogram</string>
 </resources>

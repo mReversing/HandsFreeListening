@@ -20,16 +20,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class AudioRecoderX extends Thread {
     private static final String TAG = "AudioRecorder";
     // 音频获取源
-    private int audioSource = MediaRecorder.AudioSource.MIC;
+    public int audioSource = MediaRecorder.AudioSource.MIC;
 
     // 设置音频采样率，44100是目前的标准，但是某些设备仍然支持22050，16000，11025
-    private static int sampleRateInHz = 44100;
+    public static int sampleRateInHz = 44100;
 
     // 设置音频的录制的声道CHANNEL_IN_STEREO为双声道，CHANNEL_CONFIGURATION_MONO为单声道
-    private static int channelConfig = AudioFormat.CHANNEL_IN_MONO;
+    public static int channelConfig = AudioFormat.CHANNEL_IN_MONO;
 
     // 音频数据格式:PCM 16位每个样本。保证设备支持。PCM 8位每个样本。不一定能得到设备支持。
-    private static int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
+    public static int audioFormat = AudioFormat.ENCODING_PCM_16BIT;
 
 
 
@@ -143,6 +143,8 @@ public AudioRecoderX(String filePath,Handler handler,Boolean isBlueToothModel,Au
         handler.sendMessage(msg);
 
         int m=0,n=0;//单帧最大最小响度
+        int flag=0;
+
         while (!mQuit.get()) {
             m=0;n=0;
             readsize = audioRecord.read(audiodata, 0, bufferSizeInBytes);
@@ -184,18 +186,42 @@ public AudioRecoderX(String filePath,Handler handler,Boolean isBlueToothModel,Au
                 msg.what=3;
                 handler.sendMessage(msg);
 
-                int n2=4096;
-                double[] normaldata=new double[n2];
+//                int n2=4096;
+//                double[] normaldata=new double[n2];
+//                for(i=0;i<readsize/2;i++) {
+//                    normaldata[i]=adata[i]/25565;
+//                }
+//                for(;i<n2;i++) {
+//                    normaldata[i]=0;
+//                }
+//                    mySimilarityAlgorithm.ffft(n2,normaldata);
+
+
+                int n2=8192;
+                short[] normaldata=new short[n2];
                 for(i=0;i<readsize/2;i++) {
-                    normaldata[i]=adata[i]/25565;
+                    normaldata[i]=adata[i];
                 }
                 for(;i<n2;i++) {
                     normaldata[i]=0;
                 }
-                    mySimilarityAlgorithm.ffft(n2,normaldata);
 
-
-
+//                if(flag==5){
+//                    for(i=readsize/2*flag;i<n2;i++) {
+//                        normaldata[i]=adata[i];
+//                    }
+//                    flag=0;
+//                }else {
+//                    for(i=readsize/2*flag;i<readsize/2*(flag+1)-1;i++) {
+//                        normaldata[i]=adata[i];
+//                    }
+//                    flag++;
+//                }
+                msg = Message.obtain();
+                msg.obj = normaldata;
+                msg.what=4;
+                msg.arg1=n2;
+                handler.sendMessage(msg);
 
 
             }

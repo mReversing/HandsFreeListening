@@ -1,6 +1,7 @@
 package com.mreversing.handsfreelistening;
 
 import android.content.Context;
+import android.content.Intent;
 import android.media.AudioManager;
 import android.os.Bundle;
 import android.os.Environment;
@@ -9,6 +10,7 @@ import android.os.Message;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.internal.view.menu.MenuView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
@@ -27,7 +29,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends BaseActivity {
     private static final String TAG = "MainActivity";
     AudioRecoderX mAudioRecoderX;
 
@@ -39,7 +41,7 @@ public class MainActivity extends AppCompatActivity {
     TextView tvTest2;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -72,18 +74,7 @@ public class MainActivity extends AppCompatActivity {
                     //String path=context.getFilesDir().getAbsolutePath();
                     //mAudioRecoderX=new AudioRecoderX(path+"/test.wav");
 
-                    recordDir=Environment.getExternalStorageDirectory().getAbsolutePath() + "/HandsFreeListening/";
-                    File file = new File(recordDir);
-                    try{  //提前创建好文件夹
-                        if (!file.exists()) {
-                            file.mkdir();
-                        }
-                    }catch (Exception e){
-                        e.printStackTrace();
-                    }
 
-                    SimpleDateFormat df = new SimpleDateFormat("yyyyMMdd_HHmmss");
-                    recordPath = recordDir  + df.format(new Date()) + ".pcm";
                     mAudioRecoderX=new AudioRecoderX(recordPath,handler,true,(AudioManager)getSystemService(Context.AUDIO_SERVICE));
 
                     mAudioRecoderX.start();
@@ -99,6 +90,22 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    public static String mkPCMname(){
+        recordDir=Environment.getExternalStorageDirectory().getAbsolutePath() + "/HandsFreeListening/";
+        File file = new File(recordDir);
+        try{  //提前创建好文件夹
+            if (!file.exists()) {
+                file.mkdir();
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+        SimpleDateFormat df = new SimpleDateFormat("yyyyMMdd_HHmmss");
+        recordPath = recordDir  + df.format(new Date()) + ".pcm";
+        return recordPath;
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -111,13 +118,16 @@ public class MainActivity extends AppCompatActivity {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
+        //int id = item.getItemId();
+        switch (item.getItemId()) {
+            case R.id.menu_main_action1:
+            {
+                //Intent intent = new Intent("com.mreversing.handsfreelistening.FftActivity");
+                Intent intent = new Intent(MainActivity.this,FftActivity.class);
+                startActivity(intent);
+                return true;
+            }
         }
-
         return super.onOptionsItemSelected(item);
     }
 

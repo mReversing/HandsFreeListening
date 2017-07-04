@@ -1,6 +1,9 @@
 package com.mreversing.handsfreelistening;
 
 
+import com.mreversing.handsfreelistening.calc.Complex;
+import com.mreversing.handsfreelistening.calc.FFT;
+
 public class mySimilarityAlgorithm {
     //定义响度上限下限，一音频帧中平均值在这个区间内才开始识别是否有命令。16位为2字节为short。这应该通过不同设备预录音得到
     //实测16bit最大值为32767
