@@ -15,16 +15,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
 
-import com.mreversing.handsfreelistening.R;
 import com.mreversing.handsfreelistening.Utils.PcmReader;
-import com.mreversing.handsfreelistening.Utils.WaveFileReader;
-//import com.mreversing.handsfreelistening.utils.WaveFileReader;
-//import com.mreversing.handsfreelistening.view.Spectrogram;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 
 /**
  * Author:pdm on 2016/3/15

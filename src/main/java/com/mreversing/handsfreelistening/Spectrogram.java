@@ -28,7 +28,7 @@ public class Spectrogram extends View {
     //中间显示的段数，这里取31段展示
     private static final int SPECTROGRAM_COUNT = 31;
     //这里代表最高电频（最多的格子数）
-    private static final int ROW_LOCAL_COUNT = 32;
+    private static final int ROW_LOCAL_COUNT = 64;
     /**
      * 高频与低频的分界位置
      */
@@ -46,7 +46,7 @@ public class Spectrogram extends View {
 
     private double bits;//音频编码长度存储的最大10进制的值
     /**
-     * 两个柱形之间的间隔
+     * 两个柱形之间的间隔 单位是pixel
      */
     private static final int XINTERVAL = 10;
     private static final int YINTERVAL = 8;
@@ -108,15 +108,12 @@ public class Spectrogram extends View {
     public int getTextAlpha() {
         return textAlpha;
     }
-
     public void setTextAlpha(int textAlpha) {
         this.textAlpha = textAlpha;
     }
-
     public int getSepAlpha() {
         return sepAlpha;
     }
-
     public void setSepAlpha(int sepAlpha) {
         this.sepAlpha = sepAlpha;
     }
@@ -166,7 +163,7 @@ public class Spectrogram extends View {
         // 构建纵坐标的值;bits = 16位数转十进制的最大值,这里面的值是定值，只需要算一次
         if (step == 0) {
             row_local_table[0] = 5.0;
-            bits = Math.pow(2.0, bitspersample - 1) - 1;
+            bits = Math.pow(2.0, bitspersample - 1) - 1;//32767
             step = Math.pow(bits / row_local_table[0], 1.0 / ROW_LOCAL_COUNT);// x的y次幂
             for (int i = 1; i < ROW_LOCAL_COUNT; i++) {
                 row_local_table[i] = row_local_table[i - 1] * step;
@@ -210,7 +207,7 @@ public class Spectrogram extends View {
     }
 
     /**
-     * 绘制频率坐标
+     * 绘制频率坐标，只和UI有关
      */
     private void drawSpectrogramAxis() {
         //这里对应的值是30HZ-20KHZ，中间的值成对数关系，即sampleratePoint
@@ -510,7 +507,7 @@ public class Spectrogram extends View {
             j = j + k;
         }
         // For Loops
-        for (l = 1; l <= M; l++) { /* loop for ceil{log2(N)} */
+        for (l = 1; l <= M; l++) { /* loop for  ceil{log2(N)} */
             le = (int) Math.pow(2, l);
             le2 = (int) (le / 2);
             uR = 1;

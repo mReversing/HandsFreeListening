@@ -134,6 +134,7 @@ public AudioRecoderX(String filePath,Handler handler,Boolean isBlueToothModel,Au
             }
             fos = new FileOutputStream(file);// 建立一个可存取字节的文件
         } catch (Exception e) {
+            Log.e(TAG, "File Open Failed!!!!");
             e.printStackTrace();
         }
 
@@ -206,23 +207,18 @@ public AudioRecoderX(String filePath,Handler handler,Boolean isBlueToothModel,Au
                     normaldata[i]=0;
                 }
 
-//                if(flag==5){
-//                    for(i=readsize/2*flag;i<n2;i++) {
-//                        normaldata[i]=adata[i];
-//                    }
-//                    flag=0;
-//                }else {
-//                    for(i=readsize/2*flag;i<readsize/2*(flag+1)-1;i++) {
-//                        normaldata[i]=adata[i];
-//                    }
-//                    flag++;
-//                }
                 msg = Message.obtain();
                 msg.obj = normaldata;
                 msg.what=4;
                 msg.arg1=n2;
                 handler.sendMessage(msg);
 
+
+
+                msg = Message.obtain();
+                msg.obj = adata;
+                msg.what=5;
+                handler.sendMessage(msg);
 
             }
         }

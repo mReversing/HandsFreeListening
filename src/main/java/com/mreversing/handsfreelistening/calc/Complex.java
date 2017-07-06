@@ -32,8 +32,10 @@ package com.mreversing.handsfreelistening.calc;
  ******************************************************************************/
 
 public class Complex {
-    private final double re;   // the real part
-    private final double im;   // the imaginary part
+//    private final double re;   // the real part
+//    private final double im;   // the imaginary part
+    private double re=0;   // the real part
+    private double im=0;   // the imaginary part
 
     // create a new object with the given real and imaginary parts
     public Complex(double real, double imag) {
@@ -107,6 +109,15 @@ public class Complex {
     public double im() {
         return im;
     }
+
+    //by mreversing
+    public void setre(double real) {
+        re=real;
+    }
+    public void setim(double imag) {
+        im=imag;
+    }
+
 
     // return a / b
     public Complex divides(Complex b) {

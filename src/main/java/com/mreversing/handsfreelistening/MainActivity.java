@@ -20,6 +20,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.mreversing.handsfreelistening.calc.OptFFT;
+
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.File;
@@ -74,7 +76,7 @@ public class MainActivity extends BaseActivity {
                     //String path=context.getFilesDir().getAbsolutePath();
                     //mAudioRecoderX=new AudioRecoderX(path+"/test.wav");
 
-
+                    mkPCMname();
                     mAudioRecoderX=new AudioRecoderX(recordPath,handler,true,(AudioManager)getSystemService(Context.AUDIO_SERVICE));
 
                     mAudioRecoderX.start();
@@ -148,6 +150,9 @@ public class MainActivity extends BaseActivity {
                     break;
                 case 3:
                     tvTest2.setText((String)msg.obj);
+                    break;
+                case 5:
+                    tvTest1.setText(OptFFT.OptFFTftest((short[]) msg.obj, (double) AudioRecoderX.sampleRateInHz));
                     break;
                 default:
                     break;

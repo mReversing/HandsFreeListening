@@ -12,48 +12,19 @@ public class PcmReader {
 
     private String filename = "文件";
 
-    private int len = 0;
-
-    private String chunkdescriptor = null;
-    static private int lenchunkdescriptor = 4;
-
-    private long chunksize = 0;
-    static private int lenchunksize = 4;
-
-    private String waveflag = null;
-    static private int lenwaveflag = 4;
-
-    private String fmtubchunk = null;
-    static private int lenfmtubchunk = 4;
-
-    private long subchunk1size = 0;
-    static private int lensubchunk1size = 4;
 
     private int audioformat = 0;
-    static private int lenaudioformat = 2;
+
 
     private int numchannels = 1;
-    static private int lennumchannels = 2;
 
     private long samplerate = AudioRecoderX.sampleRateInHz;
-    static private int lensamplerate = 2;
 
-    private long byterate = 0;
-    static private int lenbyterate = 4;
-
-    private int blockalign = 0;
-    static private int lenblockling = 2;
 
     private int bitspersample = 16;
 //    private int bitspersample = AudioRecoderX.audioFormat;
     static private int lenbitspersample = 2;
 
-    private String datasubchunk = null;
-    static private int lendatasubchunk = 4;
-
-    private long subchunk2size = 0;
-
-    private InputStream bis = null;
 
     public boolean issuccess = false;
     // 获取数据
@@ -79,10 +50,6 @@ public class PcmReader {
         return this.numchannels;
     }
 
-    // 获取数据长度，也就是一共采样多少个
-    public int getDataLen() {
-        return this.len;
-    }
 
     public void initReader(InputStream inputStream) {
         issuccess = true;
