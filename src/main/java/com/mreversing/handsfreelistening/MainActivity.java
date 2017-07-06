@@ -20,6 +20,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.mreversing.handsfreelistening.Utils.myPcmReader;
 import com.mreversing.handsfreelistening.calc.OptFFT;
 
 import java.io.BufferedInputStream;
@@ -41,6 +42,7 @@ public class MainActivity extends BaseActivity {
     Button btnTest;
     TextView tvTest1;
     TextView tvTest2;
+    Button btnFFTpcm;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -61,6 +63,7 @@ public class MainActivity extends BaseActivity {
         tvTest1=(TextView)findViewById(R.id.tvTest1);
         tvTest2=(TextView)findViewById(R.id.tvTest2);
         btnTest=(Button)findViewById(R.id.btnTest);
+        btnFFTpcm=(Button)findViewById(R.id.btnFFTpcm);
 
         btnTest.setOnTouchListener(new View.OnTouchListener() {
             @Override
@@ -84,10 +87,19 @@ public class MainActivity extends BaseActivity {
                 return false;
             }
         });
-        btnTest.setOnClickListener(new View.OnClickListener() {
+        btnFFTpcm.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                mkPCMname();
+                short[] buffer=new myPcmReader().readPcm(recordDir + "da1.pcm");
+                //错误示范
+                //0xf0,0xff,0xcf,0x03,0x0d,0x07,0xcc,0x09,0xab,0x0d,0xa1,0x0d,0xb6,0x0d,0xc7,0x0c,0x5b,0x0c,0xb1,0x08,0x59,0x03,0x22,0x01,0xe1,0xfe,
+                //0xb3,0xfa,0x06,0xf9,0x63,0xfa
+//                OptFFT op=new OptFFT(buffer,44100);
+//                op.startCalc();
 
+
+                btnFFTpcm.setText(OptFFT.OptFFTftest(buffer, 44100));
             }
         });
     }
@@ -151,39 +163,22 @@ public class MainActivity extends BaseActivity {
                 case 3:
                     tvTest2.setText((String)msg.obj);
                     break;
-                case 5:
-                    tvTest1.setText(OptFFT.OptFFTftest((short[]) msg.obj, (double) AudioRecoderX.sampleRateInHz));
+                case 6:
+                    //tvTest1.setText(OptFFT.OptFFTftest((short[]) msg.obj, (double) AudioRecoderX.sampleRateInHz));
+//                    if(OptFFT.OptFFTf((short[]) msg.obj, (double) AudioRecoderX.sampleRateInHz)>1000){
+//                        count++;
+//                    }
+                    if((int)OptFFT.OptFFTf((short[]) msg.obj, (double) AudioRecoderX.sampleRateInHz)>0){
+                        count++;
+                    }
+                    tvTest1.setText("count:"+count);
                     break;
                 default:
                     break;
             }
         }
     };
-	
-
-    public void findMyRate(){
-        String str1="str1：",str2="str2：";
-        short[] aa;
-        aa= getAudioData(recordPath,1);
-        for(int i=10;i<aa.length-10;i++){
-            if(aa[i]>aa[i+1] & aa[i]>aa[i+2] & aa[i]>aa[i+3] & aa[i]>aa[i+4] & aa[i]>aa[i+5] &
-            aa[i]>aa[i+6] & aa[i]>aa[i+7] & aa[i]>aa[i+8] & aa[i]>aa[i+9] & aa[i]>aa[i+10]
-                    & aa[i]>aa[i-1] & aa[i]>aa[i-2] & aa[i]>aa[i-3] & aa[i]>aa[i-4] & aa[i]>aa[i-5]
-                    & aa[i]>aa[i-6] & aa[i]>aa[i-7] & aa[i]>aa[i-8] & aa[i]>aa[i-9] & aa[i]>aa[i-10]){
-                str1+=i+" ";
-            }
-            if(aa[i]<aa[i+1] & aa[i]<aa[i+2] & aa[i]<aa[i+3] & aa[i]<aa[i+4] & aa[i]<aa[i+5] &
-                    aa[i]<aa[i+6] & aa[i]<aa[i+7] & aa[i]<aa[i+8] & aa[i]<aa[i+9] & aa[i]<aa[i+10]
-                    & aa[i]<aa[i-1] & aa[i]<aa[i-2] & aa[i]<aa[i-3] & aa[i]<aa[i-4] & aa[i]<aa[i-5]
-                    & aa[i]<aa[i-6] & aa[i]<aa[i-7] & aa[i]<aa[i-8] & aa[i]<aa[i-9] & aa[i]<aa[i-10]){
-                str2+=i+" ";
-            }
-            tvTest1.setText(str1);
-            tvTest2.setText(str2);
-        }
-
-
-    }
+	int count=0;
 
     public void findpcmmax(){
         short[] bb;

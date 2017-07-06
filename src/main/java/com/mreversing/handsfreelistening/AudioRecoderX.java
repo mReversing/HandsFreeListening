@@ -145,6 +145,8 @@ public AudioRecoderX(String filePath,Handler handler,Boolean isBlueToothModel,Au
 
         int m=0,n=0;//单帧最大最小响度
         int flag=0;
+        int n3 = 17920 * 2;
+        short[] bdata=new short[n3];
 
         while (!mQuit.get()) {
             m=0;n=0;
@@ -214,10 +216,23 @@ public AudioRecoderX(String filePath,Handler handler,Boolean isBlueToothModel,Au
                 handler.sendMessage(msg);
 
 
+                for (int j = 0; j < adata.length; j++) {
+                    bdata[1792 * flag + j] = adata[j];
+                }
+                if (flag == 9) {
+                    flag = -1;
+                    msg = Message.obtain();
+                    msg.obj = bdata;
+                    msg.what = 5;
+                    handler.sendMessage(msg);
+                } else if (flag == 0) {
+                    bdata = new short[n3];
+                }
+                flag++;
 
                 msg = Message.obtain();
                 msg.obj = adata;
-                msg.what=5;
+                msg.what = 6;
                 handler.sendMessage(msg);
 
             }
