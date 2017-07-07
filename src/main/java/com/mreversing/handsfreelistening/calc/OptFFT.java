@@ -1,6 +1,7 @@
 package com.mreversing.handsfreelistening.calc;
 
 import static com.mreversing.handsfreelistening.calc.FFT.fft;
+import static com.mreversing.handsfreelistening.calc.FFT.ifft;
 
 /**
  * Created by mreversing on 2017/7/5.
@@ -10,17 +11,21 @@ public class OptFFT {
     short[] data_buffer;//源数据
     double data_samplerate;//源数据采样率
 
-    int Calc_FFT_Size;//调整的FFT_Size，2的n次方
+    public int Calc_FFT_Size;//调整的FFT_Size，2的n次方
     int Calc_FFT_N;//上面那个n
     Complex[] Calc_cpFFT;
     Complex[] Calc_cpFFT_Result;
+    Complex[] Calc_cpiFFT_Result;
+    short[] Result_buffer;//逆变换后数据
+    Complex[] Hd;//滤波器，权函数
+
 
     public OptFFT(short[] buf, double samplerate){
         data_buffer=buf;
         data_samplerate=samplerate;
     }
 
-    public void startCalc(){
+    public void Calc_FFT(){
         if (data_buffer.length == 0) {
             //没有数据，报错
         }
@@ -52,14 +57,42 @@ public class OptFFT {
         return  2 * Calc_cpFFT_Result[N].abs() / Calc_FFT_Size;// 计算电频最大值，Math.hypot(x,y)返回sqrt(x2+y2)，最高电频
 
     }
+    public void Calc_Filter() {
+        for (int i=0;i<Calc_FFT_Size;i++){
+            Calc_cpFFT_Result[i]=Calc_cpFFT_Result[i].times(Hd[i]);
+        }
+    }
+
+    public void Calc_Filter2() {
+        double NNmin= getNfromF(2700);
+        double NNmax= getNfromF(3100);
+        for (int i=0;i<Calc_FFT_Size;i++){
+            if(i<NNmin | i>NNmax) {
+                Calc_cpFFT_Result[i].setre(0);
+                Calc_cpFFT_Result[i].setim(0);
+            }
+        }
+    }
+
+    public void Calc_iFFT(){
+        Calc_cpiFFT_Result=ifft(Calc_cpFFT_Result);//返回FFT结果
+        Result_buffer=new short[Calc_FFT_Size];
+        for(int i=0;i<Calc_FFT_Size;i++){
+            Result_buffer[i]=(short)Calc_cpiFFT_Result[i].re();
+        }
+    }
+    public short[] getifftResult(){
+        return Result_buffer;
+    }
 
 
-    /**
-     * 显示频谱时进行FFT计算
-     *
-     * @param buf        不定长的源数据，方法中自动整合到2的n次方以对齐FFT算法
-     * @param samplerate 采样率
-     */
+
+        /**
+         * 显示频谱时进行FFT计算
+         *
+         * @param buf        不定长的源数据，方法中自动整合到2的n次方以对齐FFT算法
+         * @param samplerate 采样率
+         */
     public static double OptFFTf(short[] buf, double samplerate) {
         // 八分频(相当于降低了8倍采样率)，这样1024缓存区中的fft频率密度就越大，有利于取低频。但修改后先不管分频的事
         //经测试，采样数据多的情况下fft算法比较慢
@@ -98,9 +131,9 @@ public class OptFFT {
 
         double[] m2=new double[20];
        int count=0;
-        for(int j=2850;j<3050;j+=10){
-            m2[(j-2850)/10] = 2 * cpFFTresult[Nf].abs() / FFT_SIZE;
-            if(m2[(j-2850)/20]>100){
+        for(int j=2900;j<3000;j+=5){
+            m2[(j-2900)/5] = 2 * cpFFTresult[Nf].abs() / FFT_SIZE;
+            if(m2[(j-2900)/5]>300){
                 count++;
             }
         }

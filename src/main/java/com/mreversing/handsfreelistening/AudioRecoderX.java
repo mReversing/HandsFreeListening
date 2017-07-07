@@ -9,6 +9,8 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 
+import com.mreversing.handsfreelistening.Utils.myPcmWriter;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -121,22 +123,13 @@ public AudioRecoderX(String filePath,Handler handler,Boolean isBlueToothModel,Au
         Log.e(TAG, "writeDataTOFile!!!!!!!!");
         // new一个byte数组用来存一些字节数据，大小为缓冲区大小
         byte[] audiodata = new byte[bufferSizeInBytes];
-
+        //zuk z1 bufferSizeInBytes值为3584，0.0406349206349206s一音频帧
         FileOutputStream fos = null;
+
+        myPcmWriter pw= new myPcmWriter(MainActivity.recordPath);
+        fos= pw.getFOS();
+
         int readsize = 0;
-        try {
-            File file = new File(MainActivity.recordPath);
-            if (file.exists()) {
-                file.delete();
-            }else{
-                //file.mkdir();注意要先创建文件夹
-                file.createNewFile();
-            }
-            fos = new FileOutputStream(file);// 建立一个可存取字节的文件
-        } catch (Exception e) {
-            Log.e(TAG, "File Open Failed!!!!");
-            e.printStackTrace();
-        }
 
         Message msg = Message.obtain();
         msg.obj = "Thread start";
@@ -237,11 +230,7 @@ public AudioRecoderX(String filePath,Handler handler,Boolean isBlueToothModel,Au
 
             }
         }
-        try {
-            fos.close();// 关闭写入流
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        pw.close();
     }
 
     private void release() {

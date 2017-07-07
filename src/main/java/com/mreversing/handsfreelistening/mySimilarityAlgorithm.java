@@ -21,9 +21,13 @@ public class mySimilarityAlgorithm {
         return 40;
     }
 
-    public mySimilarityAlgorithm(byte[] Targetdata,byte[] Origindata,int bufferSizeInBytes){
+//    public mySimilarityAlgorithm(byte[] Targetdata,byte[] Origindata,int bufferSizeInBytes){
+//
+//    }
 
-    }
+
+
+
 
 	
 	/*粗略地实现傅里叶变换方法*/
@@ -52,7 +56,56 @@ public class mySimilarityAlgorithm {
 //        Complex[] d = convolve(x, x);
 //        show(d, "d = convolve(x, x)");
 	}
-	
+
+    public int xzifftcheck(short[] data){
+        int checklist[] = {-203, -74, -30, 30, 75, 117, 174, 246};//相对最高点位置
+        int checkpointabs[] = {61, 159, 452, 581, 308, 70, 191, 108};//幅值
+        int checkmax = 594;
+        int len = data.length;
+        int lencheck = checklist.length;
+        int temp = 0;
+        int maxpoint = 0;
+        short max = 0;
+//findMaxad
+        for (int i = 0; i < len; i++) {
+            if (temp < data[i]) {
+                temp = data[i];
+                maxpoint = i;
+            }
+        }
+        if (maxpoint < -checklist[0]+2 | maxpoint > checklist[lencheck - 1]+2) {
+            return 0;
+            //保证能取到
+        }
+        max = data[maxpoint];
+        double times = max / checkmax;//倍数检查
+        double times0 = 0;
+        int count0 = 0;
+        for (int i = 0; i < lencheck; i++) {
+            times0 = changemax(data, checklist[i] + maxpoint) / checkpointabs[i];
+            times0 = times0 / times;
+            if (times0 > 1.02 | times0 < 0.98) {
+
+            } else {
+                count0++;
+            }
+        }
+        return (int) (100 * count0 / lencheck);
+    }
+
+    private short changemax(short[] data, int ad) {
+        //5个点取最大值
+        short temp = 0;
+        int i0 = 0;
+        for (int i = -2; i < 3; i++) {
+            if (temp < data[ad + i]) {
+                temp = data[ad + i];
+            }
+        }
+        return temp;
+    }
+
+
 
     /**
      * 查找最大值

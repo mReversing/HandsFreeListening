@@ -21,6 +21,7 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import com.mreversing.handsfreelistening.Utils.myPcmReader;
+import com.mreversing.handsfreelistening.Utils.myPcmWriter;
 import com.mreversing.handsfreelistening.calc.OptFFT;
 
 import java.io.BufferedInputStream;
@@ -28,6 +29,7 @@ import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -43,6 +45,8 @@ public class MainActivity extends BaseActivity {
     TextView tvTest1;
     TextView tvTest2;
     Button btnFFTpcm;
+    Button btnSimulate;
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -64,6 +68,7 @@ public class MainActivity extends BaseActivity {
         tvTest2=(TextView)findViewById(R.id.tvTest2);
         btnTest=(Button)findViewById(R.id.btnTest);
         btnFFTpcm=(Button)findViewById(R.id.btnFFTpcm);
+        btnSimulate=(Button)findViewById(R.id.btnSimulate);
 
         btnTest.setOnTouchListener(new View.OnTouchListener() {
             @Override
@@ -91,15 +96,40 @@ public class MainActivity extends BaseActivity {
             @Override
             public void onClick(View v) {
                 mkPCMname();
-                short[] buffer=new myPcmReader().readPcm(recordDir + "da1.pcm");
-                //错误示范
-                //0xf0,0xff,0xcf,0x03,0x0d,0x07,0xcc,0x09,0xab,0x0d,0xa1,0x0d,0xb6,0x0d,0xc7,0x0c,0x5b,0x0c,0xb1,0x08,0x59,0x03,0x22,0x01,0xe1,0xfe,
-                //0xb3,0xfa,0x06,0xf9,0x63,0xfa
-//                OptFFT op=new OptFFT(buffer,44100);
-//                op.startCalc();
+                short[] buffer = new myPcmReader().readPcm(recordDir + "freqlb.pcm");
 
+                //逆变换后写入文件
+                OptFFT op = new OptFFT(buffer, 44100);
+                op.Calc_FFT();
+                op.Calc_Filter2();
+                op.Calc_iFFT();
+                myPcmWriter pw = new myPcmWriter(recordDir + "freqlb_result.pcm");
+                FileOutputStream fos = pw.getFOS();
+                for (int i = 0; i < op.getifftResult().length; i++) {
+                    try {
+                        fos.write(myPcmWriter.shortToByte(op.getifftResult()[i]));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
 
-                btnFFTpcm.setText(OptFFT.OptFFTftest(buffer, 44100));
+                }
+                //以下仅作输出十进制文件用
+//                String str="";
+//                for(int i=0;i<buffer.length;i++){
+//                    str+=" "+buffer[i];
+//                }
+//                Log.e("haha",str);
+
+//                btnFFTpcm.setText(OptFFT.OptFFTftest(buffer, 44100));
+            }
+        });
+
+        btnSimulate.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mkPCMname();
+                simulateAudioRecoderX sarx=new simulateAudioRecoderX(recordDir+"simulate.pcm");
+                tvTest1.setText("count:"+sarx.startSimulate());
             }
         });
     }
@@ -168,9 +198,32 @@ public class MainActivity extends BaseActivity {
 //                    if(OptFFT.OptFFTf((short[]) msg.obj, (double) AudioRecoderX.sampleRateInHz)>1000){
 //                        count++;
 //                    }
-                    if((int)OptFFT.OptFFTf((short[]) msg.obj, (double) AudioRecoderX.sampleRateInHz)>0){
+//                    计算在某个频率范围内的幅值大于多少（1000）就计数
+//                    if((int)OptFFT.OptFFTf((short[]) msg.obj, (double) AudioRecoderX.sampleRateInHz)>0){
+//                        count++;
+//                    }
+//                    tvTest1.setText("count:"+count);
+                    OptFFT op=new OptFFT((short[]) msg.obj,44100);
+                    op.Calc_FFT();
+                    op.Calc_Filter2();
+                    op.Calc_iFFT();
+                    //warn:运算过慢
+                    //提示：可以使用DTW，还要确保在整个音频帧内只有0.003s一个指定数据包(只是最有效的数据)
+                    //可以利用fft求出频率为2700-3100所在范围的时域坐标，利用DTW计算是否符合，但还是不能抗噪
+                    //还有一种方法是对ifft后的结果进行分析，可以抗噪，在特定频段考查，找出人声和响指的差别，难点是ifft后数据平滑，很难找特殊
+                    //要比较多的模板数据
+
+//                    short[] ifft=op.getifftResult();
+//                    for(int i=0;i<op.Calc_FFT_Size;i++){
+//                        if(ifft[i]>512){
+//                            count++;
+//                            break;
+//                        }
+//                    }
+                    if(new mySimilarityAlgorithm(). xzifftcheck(op.getifftResult())>80){
                         count++;
                     }
+
                     tvTest1.setText("count:"+count);
                     break;
                 default:
@@ -199,14 +252,13 @@ public class MainActivity extends BaseActivity {
         short[] audioData = null;
         try {
             dis = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
-if(type==1){
-    // file.length() / 2 +1 : /2 : 两位byte数据保存为一位short数据; +1 : 保存文件结尾标志
-    audioData = getAudioData(dis, (int) file.length() / 2, 1);
-}else{
-    //type=2 8bit
-    audioData = getAudioData(dis, (int) file.length(), 2);
-}
-
+            if (type == 1) {
+                // file.length() / 2 +1 : /2 : 两位byte数据保存为一位short数据; +1 : 保存文件结尾标志
+                audioData = getAudioData(dis, (int) file.length() / 2, 1);
+            } else {
+                //type=2 8bit
+                audioData = getAudioData(dis, (int) file.length(), 2);
+            }
             dis.close();
         } catch (FileNotFoundException e) {
             e.printStackTrace();

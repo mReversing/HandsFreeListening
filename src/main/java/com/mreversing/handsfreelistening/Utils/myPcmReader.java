@@ -24,7 +24,7 @@ public class myPcmReader {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
-        short[] data = new short[(short) len];
+        short[] data = new short[(int) len];
         for (int i = 0; i < len; i++) {
             data[i] = readShort();
         }
