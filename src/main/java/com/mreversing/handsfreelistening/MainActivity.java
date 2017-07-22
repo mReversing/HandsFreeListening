@@ -13,12 +13,14 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.internal.view.menu.MenuView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.mreversing.handsfreelistening.Utils.myPcmReader;
 import com.mreversing.handsfreelistening.Utils.myPcmWriter;
@@ -31,12 +33,14 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class MainActivity extends BaseActivity {
     private static final String TAG = "MainActivity";
     AudioRecoderX mAudioRecoderX;
+    VoiceAnalyse mVoiceAnalyse;
 
     public static String recordDir;
     public static String recordPath;
@@ -77,6 +81,7 @@ public class MainActivity extends BaseActivity {
                 {
                     Log.e(TAG, "mQuit was going to be set true!!!!!!!!");
                     mAudioRecoderX.quit();
+                    mVoiceAnalyse.quit();
                 }
                 else if(event.getAction() == MotionEvent.ACTION_DOWN){
 
@@ -85,8 +90,11 @@ public class MainActivity extends BaseActivity {
                     //mAudioRecoderX=new AudioRecoderX(path+"/test.wav");
 
                     mkPCMname();
-                    mAudioRecoderX=new AudioRecoderX(recordPath,handler,true,(AudioManager)getSystemService(Context.AUDIO_SERVICE));
 
+                    mVoiceAnalyse=new VoiceAnalyse(handler);
+                    mVoiceAnalyse.start();
+
+                    mAudioRecoderX=new AudioRecoderX(recordPath,handler,true,(AudioManager)getSystemService(Context.AUDIO_SERVICE),mVoiceAnalyse.vaHandler);
                     mAudioRecoderX.start();
                 }
                 return false;
@@ -104,23 +112,9 @@ public class MainActivity extends BaseActivity {
                 op.Calc_Filter2();
                 op.Calc_iFFT();
                 myPcmWriter pw = new myPcmWriter(recordDir + "freqlb_result.pcm");
-                FileOutputStream fos = pw.getFOS();
-                for (int i = 0; i < op.getifftResult().length; i++) {
-                    try {
-                        fos.write(myPcmWriter.shortToByte(op.getifftResult()[i]));
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-
-                }
-                //以下仅作输出十进制文件用
-//                String str="";
-//                for(int i=0;i<buffer.length;i++){
-//                    str+=" "+buffer[i];
-//                }
-//                Log.e("haha",str);
-
-//                btnFFTpcm.setText(OptFFT.OptFFTftest(buffer, 44100));
+                pw.initOutputStream();
+                pw.writeData(op.getifftResult());
+                pw.close();
             }
         });
 
@@ -180,20 +174,28 @@ public class MainActivity extends BaseActivity {
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
-                case 1:
+                case 125801: //录音线程开始
                     btnTest.setText("Stop");
                     break;
-                case 2:
+                case 125802: //录音线程结束
                     btnTest.setText("Start");
                     Log.d(TAG, "handleMessage AudioRecoder stopped ");
                     //findpcmmax();
                     tvTest2.setText((String) msg.obj);
                     //findMyRate();
                     break;
-                case 3:
+                case 125803:
                     tvTest2.setText((String)msg.obj);
                     break;
-                case 6:
+                case 125804:
+                    break;
+                case 125805://识别成功
+                    Log.d(TAG, (String)msg.obj);
+                    break;
+                case 125806:
+
+                    break;
+                case 125807:
                     //tvTest1.setText(OptFFT.OptFFTftest((short[]) msg.obj, (double) AudioRecoderX.sampleRateInHz));
 //                    if(OptFFT.OptFFTf((short[]) msg.obj, (double) AudioRecoderX.sampleRateInHz)>1000){
 //                        count++;
@@ -233,79 +235,22 @@ public class MainActivity extends BaseActivity {
     };
 	int count=0;
 
-    public void findpcmmax(){
-        short[] bb;
-        bb= getAudioData(recordPath,1);
-        tvTest1.setText("Max: "+mySimilarityAlgorithm.findMaxNoabs(bb)+"Min: "+mySimilarityAlgorithm.findMin(bb));
-    }
+    //记录用户首次点击返回键的时间
+    private long firstTime=0;
 
-    /**
-     * 获取音频数据
-     *
-     * @param filePath 音频数据文件路径
-     * @return
-     */
-    public short[] getAudioData(String filePath, int type) {
-        File file = new File(filePath);
-        System.out.println("File info   " + file.length());
-        DataInputStream dis = null;
-        short[] audioData = null;
-        try {
-            dis = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
-            if (type == 1) {
-                // file.length() / 2 +1 : /2 : 两位byte数据保存为一位short数据; +1 : 保存文件结尾标志
-                audioData = getAudioData(dis, (int) file.length() / 2, 1);
-            } else {
-                //type=2 8bit
-                audioData = getAudioData(dis, (int) file.length(), 2);
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if(keyCode==KeyEvent.KEYCODE_BACK && event.getAction()==KeyEvent.ACTION_DOWN){
+            if (System.currentTimeMillis()-firstTime>2000){
+                Toast.makeText(MainActivity.this,"再按一次退出程序", Toast.LENGTH_SHORT).show();
+                firstTime=System.currentTimeMillis();
+            }else{
+                finish();
+                System.exit(0);
             }
-            dis.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
+            return true;
         }
-        return audioData;
+        return super.onKeyDown(keyCode, event);
     }
 
-    /**
-     * 按编码类型提取音频数据
-     *
-     * @param dis
-     * @param size
-     * @param type
-     * @return
-     */
-    public static short[] getAudioData(DataInputStream dis, int size, int type) {
-        short[] audioData = new short[size];
-        try {
-            if(type==1){
-                byte[] tempData = new byte[2];
-                long audioDataSize = 0;
-                while (dis.read(tempData) != -1) {
-                    // 每16位读取一个音频数据
-                    audioData[(int) audioDataSize] = (short) (((tempData[0] & 0xff) << 8) | (tempData[1] & 0xff));
-                    audioDataSize++;
-                    if (audioDataSize == size) {
-                        break;
-                    }
-                }
-            }else if(type==2) {
-                byte tempData[] = new byte[1];
-                long audioDataSize = 0;
-                while (dis.read(tempData) != -1) {
-                    // 每8位读取一个音频数据
-                    audioData[(int) audioDataSize] = (short) (tempData[0]);
-                    audioDataSize++;
-                    if (audioDataSize == size) {
-                        break;
-                    }
-                }
-
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return audioData;
-    }
 }

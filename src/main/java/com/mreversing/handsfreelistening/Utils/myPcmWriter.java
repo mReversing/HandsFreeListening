@@ -5,6 +5,7 @@ import android.util.Log;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 
 /**
  * Created by mreversing on 2017/7/7.
@@ -18,7 +19,7 @@ public  class myPcmWriter {
         fPath=myPath;
     }
 
-    public FileOutputStream getFOS(){
+    public void initOutputStream(){
         try {
             File file = new File(fPath);
             if (file.exists()) {
@@ -32,6 +33,9 @@ public  class myPcmWriter {
             Log.e("PcmWriter", "File Open Failed!!!!");
             e.printStackTrace();
         }
+    }
+
+    public FileOutputStream getFOS(){
         return fos;
     }
 
@@ -58,4 +62,51 @@ public  class myPcmWriter {
         }
         return b;//结果为b[0]为最后两位，b[1]为首两位
     }
+
+    public static short  ByteToshort(byte number1,byte number2) {
+        return (short) (((number1 & 0xff) << 8) | (number2 & 0xff));//上一个函数的反函数
+    }
+
+    public void writeData(short[] data){
+
+        for (int i = 0; i < data.length; i++) {
+            try {
+              fos.write(myPcmWriter.shortToByte(data[i]));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    public void writeData(byte[] data){
+        try {
+            fos.write(data);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void writeData2(short[] data){
+        //数字形式，非二进制形式数据
+        OutputStreamWriter osw=new OutputStreamWriter(fos);
+        for (int i = 0; i < data.length; i++) {
+            try {
+                osw.write(Short.toString(data[i])+"\n");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void writeData2(byte[] data) {
+        //默认16位
+        OutputStreamWriter osw = new OutputStreamWriter(fos);
+        for (int i = 0; i < data.length / 2; i++) {
+            try {
+                osw.write(Short.toString(ByteToshort(data[2*i],data[2*i+1]))+"\n");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
 }

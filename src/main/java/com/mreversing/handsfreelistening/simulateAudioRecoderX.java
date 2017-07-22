@@ -7,11 +7,13 @@ import com.mreversing.handsfreelistening.calc.OptFFT;
  * Created by mreversing on 2017/7/8.
  */
 public class simulateAudioRecoderX {
-    String Path="";
-public simulateAudioRecoderX(String fPath){
-Path=fPath;
-}
-    public int startSimulate(){
+    String Path = "";
+
+    public simulateAudioRecoderX(String fPath) {
+        Path = fPath;
+    }
+
+    public int startSimulate() {
         myPcmReader pr = new myPcmReader();
         short[] data = pr.readPcm(Path);
         int lencircle = data.length / 1792;

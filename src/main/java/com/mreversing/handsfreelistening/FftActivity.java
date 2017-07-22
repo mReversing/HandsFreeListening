@@ -173,7 +173,7 @@ private Runnable specRun = new Runnable() {
                     case HANDLER_SPECTROGRAM: //原代码，不修改。
                         mSpectrogram.ShowSpectrogram((int[]) msg.obj, false, samplerate);
                         break;
-                    case 4:
+                    case 125904:
                         data = (short[]) msg.obj;
 //                        for (int i = 0; i < msg.arg1; i++) {
 //                            InputStream InputStream;

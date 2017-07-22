@@ -19,7 +19,12 @@ public class OptFFT {
     short[] Result_buffer;//逆变换后数据
     Complex[] Hd;//滤波器，权函数
 
-
+    /**
+     * 显示频谱时进行FFT计算
+     *
+     * @param buf        不定长的源数据，方法中自动整合到2的n次方以对齐FFT算法
+     * @param samplerate 采样率
+     */
     public OptFFT(short[] buf, double samplerate){
         data_buffer=buf;
         data_samplerate=samplerate;
@@ -55,7 +60,7 @@ public class OptFFT {
 
     public double getModelfromN(int N){
         return  2 * Calc_cpFFT_Result[N].abs() / Calc_FFT_Size;// 计算电频最大值，Math.hypot(x,y)返回sqrt(x2+y2)，最高电频
-
+        //44100Hz下1024个点对应1024/44100=0.0232199546485261s，每44100/1024=43.06640625Hz一个N，用于需要的声音频域分辨率大概够了
     }
     public void Calc_Filter() {
         for (int i=0;i<Calc_FFT_Size;i++){
@@ -86,13 +91,12 @@ public class OptFFT {
     }
 
 
-
-        /**
-         * 显示频谱时进行FFT计算
-         *
-         * @param buf        不定长的源数据，方法中自动整合到2的n次方以对齐FFT算法
-         * @param samplerate 采样率
-         */
+    /**
+     * 显示频谱时进行FFT计算
+     *
+     * @param buf        不定长的源数据，方法中自动整合到2的n次方以对齐FFT算法
+     * @param samplerate 采样率
+     */
     public static double OptFFTf(short[] buf, double samplerate) {
         // 八分频(相当于降低了8倍采样率)，这样1024缓存区中的fft频率密度就越大，有利于取低频。但修改后先不管分频的事
         //经测试，采样数据多的情况下fft算法比较慢
