@@ -164,7 +164,7 @@ public class AudioRecoderX extends Thread {
                 total=(int)total/readsize*2;//算出平均值，峰值是65536/4
                 //Log.e(TAG, "|"+p+"|");
                 msg = Message.obtain();
-                msg.obj = "|"+total+"|";
+                msg.obj = "average: "+total+" ";
                 msg.what=125803;
                 handler.sendMessage(msg);
 

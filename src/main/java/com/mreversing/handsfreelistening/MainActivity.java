@@ -44,12 +44,14 @@ public class MainActivity extends BaseActivity {
 
     public static String recordDir;
     public static String recordPath;
+    public Boolean isRunning=false;
 
     Button btnTest;
     TextView tvTest1;
     TextView tvTest2;
     Button btnFFTpcm;
     Button btnSimulate;
+    Button btnRun;
 
 
     @Override
@@ -73,6 +75,7 @@ public class MainActivity extends BaseActivity {
         btnTest=(Button)findViewById(R.id.btnTest);
         btnFFTpcm=(Button)findViewById(R.id.btnFFTpcm);
         btnSimulate=(Button)findViewById(R.id.btnSimulate);
+        btnRun=(Button)findViewById(R.id.btnRun);
 
         btnTest.setOnTouchListener(new View.OnTouchListener() {
             @Override
@@ -93,6 +96,9 @@ public class MainActivity extends BaseActivity {
 
                     mVoiceAnalyse=new VoiceAnalyse(handler);
                     mVoiceAnalyse.start();
+                    while (mVoiceAnalyse.vaHandler==null){
+                        //在此等待mVoiceAnalyse.vaHandler初始化完毕
+                    }
 
                     mAudioRecoderX=new AudioRecoderX(recordPath,handler,true,(AudioManager)getSystemService(Context.AUDIO_SERVICE),mVoiceAnalyse.vaHandler);
                     mAudioRecoderX.start();
@@ -123,7 +129,30 @@ public class MainActivity extends BaseActivity {
             public void onClick(View v) {
                 mkPCMname();
                 simulateAudioRecoderX sarx=new simulateAudioRecoderX(recordDir+"simulate.pcm",recordDir);
-                tvTest1.setText("count:"+sarx.startSimulate());
+                tvTest1.setText("count:" + sarx.startSimulate());
+            }
+        });
+
+        btnRun.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(isRunning){
+                    Log.e(TAG, "mQuit was going to be set true!!!!!!!!");
+                    mAudioRecoderX.quit();
+                    mVoiceAnalyse.quit();
+
+                }else{
+                    mkPCMname();
+
+                    mVoiceAnalyse=new VoiceAnalyse(handler);
+                    mVoiceAnalyse.start();
+                    while (mVoiceAnalyse.vaHandler==null){
+                        //在此等待mVoiceAnalyse.vaHandler初始化完毕
+                    }
+                    mAudioRecoderX=new AudioRecoderX(recordPath,handler,true,(AudioManager)getSystemService(Context.AUDIO_SERVICE),mVoiceAnalyse.vaHandler);
+                    mAudioRecoderX.start();
+
+                }
             }
         });
     }
@@ -165,6 +194,12 @@ public class MainActivity extends BaseActivity {
                 startActivity(intent);
                 return true;
             }
+            case R.id.menu_main_action0:
+            {
+                finish();
+                System.exit(0);
+                return true;
+            }
         }
         return super.onOptionsItemSelected(item);
     }
@@ -176,9 +211,13 @@ public class MainActivity extends BaseActivity {
             switch (msg.what) {
                 case 125801: //录音线程开始
                     btnTest.setText("Stop");
+                    isRunning=true;
+                    btnRun.setText("Running...");
                     break;
                 case 125802: //录音线程结束
                     btnTest.setText("Start");
+                    isRunning=false;
+                    btnRun.setText("Run");
                     Log.d(TAG, "handleMessage AudioRecoder stopped ");
                     //findpcmmax();
                     tvTest2.setText((String) msg.obj);
@@ -191,7 +230,9 @@ public class MainActivity extends BaseActivity {
                     break;
                 case 125805://识别成功
 //                    Log.d(TAG, (String)msg.obj);
-                    tvTest1.setText((String)msg.obj);
+				    BingoCount++;
+                    tvTest1.setText(Integer.toString(BingoCount));
+					//tvTest1.setText((String)msg.obj);
                     break;
                 case 125806:
 
@@ -235,23 +276,24 @@ public class MainActivity extends BaseActivity {
         }
     };
 	int count=0;
+	int BingoCount=0;
 
     //记录用户首次点击返回键的时间
-    private long firstTime=0;
-
-    @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if(keyCode==KeyEvent.KEYCODE_BACK && event.getAction()==KeyEvent.ACTION_DOWN){
-            if (System.currentTimeMillis()-firstTime>2000){
-                Toast.makeText(MainActivity.this,"再按一次退出程序", Toast.LENGTH_SHORT).show();
-                firstTime=System.currentTimeMillis();
-            }else{
-                finish();
-                System.exit(0);
-            }
-            return true;
-        }
-        return super.onKeyDown(keyCode, event);
-    }
+//    private long firstTime=0;
+//
+//    @Override
+//    public boolean onKeyDown(int keyCode, KeyEvent event) {
+//        if(keyCode==KeyEvent.KEYCODE_BACK && event.getAction()==KeyEvent.ACTION_DOWN){
+//            if (System.currentTimeMillis()-firstTime>2000){
+//                Toast.makeText(MainActivity.this,"再按一次退出程序", Toast.LENGTH_SHORT).show();
+//                firstTime=System.currentTimeMillis();
+//            }else{
+//                finish();
+//                System.exit(0);
+//            }
+//            return true;
+//        }
+//        return super.onKeyDown(keyCode, event);
+//    }
 
 }

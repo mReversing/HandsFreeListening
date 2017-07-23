@@ -138,12 +138,12 @@ public class simulateAudioRecoderX {
 
              int BeginIndex=-1;
 
-             for (int i = 0; i < 8; i++) {
-                 for (int j = 0; j < 12; j++) {
-                     if (Trigger[i + j][2] < 30) {
-                         return false;
+             for (int i = 0; i < 11; i++) {
+                 for (int j = 0; j < 10; j++) {
+                     if (Trigger[i + j][2] < 10) {
+                         break;
                      }
-                     if(j==12){
+                     if(j==9){
                          BeginIndex=i;
                      }
                  }
@@ -152,17 +152,19 @@ public class simulateAudioRecoderX {
                  }
              }
              if(BeginIndex>=0){
-                 for (int j = BeginIndex; j < BeginIndex+12; j++) {
-                     if (Trigger[j][1] < 300 & Trigger[j][1]>500) {
+                 for (int j = BeginIndex; j < BeginIndex+10; j++) {
+                     if (Trigger[j][1] < 330 & Trigger[j][1]>550) {
                          return false;
                      }
                  }
-             }
-             for (int j = BeginIndex; j < BeginIndex+12; j++) {
-                 if (Trigger[j][0] < 4500) {
+             }else{return false;}
+             for (int j = BeginIndex; j < BeginIndex+10; j++) {
+                 if (Trigger[j][0] < 4600 |Trigger[j][0]>11800) {
                      return false;
                  }
-             }
+				 else if(Trigger[j][0]>5900 &Trigger[j][0]<8000){return false;}
+				 else if(Trigger[j][0]>9800 &Trigger[j][0]<10000){return false;}
+				 }
 
              return true;
          }else{
