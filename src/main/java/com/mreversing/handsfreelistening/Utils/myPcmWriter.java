@@ -42,6 +42,7 @@ public  class myPcmWriter {
     public void close() {
         try {
             fos.close();// 关闭写入流
+
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -91,6 +92,7 @@ public  class myPcmWriter {
         for (int i = 0; i < data.length; i++) {
             try {
                 osw.write(Short.toString(data[i])+"\n");
+                osw.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -103,6 +105,7 @@ public  class myPcmWriter {
         for (int i = 0; i < data.length / 2; i++) {
             try {
                 osw.write(Short.toString(ByteToshort(data[2*i],data[2*i+1]))+"\n");
+                osw.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }

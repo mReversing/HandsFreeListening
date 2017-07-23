@@ -5,6 +5,8 @@ import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 
+import com.mreversing.handsfreelistening.calc.OptFFT;
+
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -27,7 +29,7 @@ public class VoiceAnalyse extends Thread {
 
     }
 
-    private Handler handler;
+    private Handler handler;//发送识别成功信息到此Handler
     public Handler vaHandler=new Handler(){
         @Override
         public void handleMessage(Message msg) {
@@ -46,15 +48,23 @@ public class VoiceAnalyse extends Thread {
     };
 
     private void Analyse(short[] data){
+        OptFFT op=new OptFFT(data,44100);
+        op.Calc_FFT();
+        double max=0;
+        int maxIndex=0;
+        for (int i=1;i<op.Calc_FFT_Size;i++){
+            if(max<op.getModelfromN(i)){
+                max=op.getModelfromN(i);
+                maxIndex=i;
+            }
+        }
+        int maxF=op.getFfromN(maxIndex);
 
-
-
-
-            Message msg = Message.obtain();
+            Message msg;
 
             //以下为发消息给MainActivity
             msg = Message.obtain();
-            msg.obj = Integer.toString(Recount);
+            msg.obj = Integer.toString(maxF);
             msg.what=125805;
             handler.sendMessage(msg);
 

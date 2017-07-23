@@ -15,8 +15,9 @@ public class OptFFT {
     int Calc_FFT_N;//上面那个n
     Complex[] Calc_cpFFT;
     Complex[] Calc_cpFFT_Result;
+//    short[] fft_Result_Model_buffer;//fft变换后幅值
     Complex[] Calc_cpiFFT_Result;
-    short[] Result_buffer;//逆变换后数据
+    short[] ifft_Result_buffer;//逆变换后数据
     Complex[] Hd;//滤波器，权函数
 
     /**
@@ -57,11 +58,18 @@ public class OptFFT {
     public int getNfromF(double F){
         return (int)(F*Calc_FFT_Size/data_samplerate);//频率对应的n值
     }
+    public int getFfromN(int N){
+        return (int)(data_samplerate*N/Calc_FFT_Size);//n值对应的最小频率
+    }
 
     public double getModelfromN(int N){
         return  2 * Calc_cpFFT_Result[N].abs() / Calc_FFT_Size;// 计算电频最大值，Math.hypot(x,y)返回sqrt(x2+y2)，最高电频
         //44100Hz下1024个点对应1024/44100=0.0232199546485261s，每44100/1024=43.06640625Hz一个N，用于需要的声音频域分辨率大概够了
     }
+    public Complex[] getfftResult(){
+        return Calc_cpFFT_Result;
+    }
+
     public void Calc_Filter() {
         for (int i=0;i<Calc_FFT_Size;i++){
             Calc_cpFFT_Result[i]=Calc_cpFFT_Result[i].times(Hd[i]);
@@ -81,13 +89,13 @@ public class OptFFT {
 
     public void Calc_iFFT(){
         Calc_cpiFFT_Result=ifft(Calc_cpFFT_Result);//返回FFT结果
-        Result_buffer=new short[Calc_FFT_Size];
+        ifft_Result_buffer=new short[Calc_FFT_Size];
         for(int i=0;i<Calc_FFT_Size;i++){
-            Result_buffer[i]=(short)Calc_cpiFFT_Result[i].re();
+            ifft_Result_buffer[i]=(short)Calc_cpiFFT_Result[i].re();
         }
     }
     public short[] getifftResult(){
-        return Result_buffer;
+        return ifft_Result_buffer;
     }
 
 

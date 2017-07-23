@@ -122,7 +122,7 @@ public class MainActivity extends BaseActivity {
             @Override
             public void onClick(View v) {
                 mkPCMname();
-                simulateAudioRecoderX sarx=new simulateAudioRecoderX(recordDir+"simulate.pcm");
+                simulateAudioRecoderX sarx=new simulateAudioRecoderX(recordDir+"simulate.pcm",recordDir);
                 tvTest1.setText("count:"+sarx.startSimulate());
             }
         });
@@ -190,7 +190,8 @@ public class MainActivity extends BaseActivity {
                 case 125804:
                     break;
                 case 125805://识别成功
-                    Log.d(TAG, (String)msg.obj);
+//                    Log.d(TAG, (String)msg.obj);
+                    tvTest1.setText((String)msg.obj);
                     break;
                 case 125806:
 
