@@ -14,6 +14,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class VoiceAnalyse extends Thread {
 
+    public static int BufferLength=8;
     int RevCount = 0;
     private AtomicBoolean mQuit = new AtomicBoolean(false);
 
@@ -53,7 +54,7 @@ public class VoiceAnalyse extends Thread {
     private void Analyse(short[] data) {
         Boolean Bingo = AnalyseTrigger(data);
         if (Bingo) {
-            if (RevCount - tempReCount > 50) { //50是两次识别的间隔帧
+            if (RevCount - tempReCount > 40) { //50是两次识别的间隔帧
                 realTriggerCount++;
                 tempReCount = RevCount;
 
@@ -76,40 +77,40 @@ public class VoiceAnalyse extends Thread {
         //检测语音帧的触发器，缓存20个分析后的数据，也就是20*1024/44100=0.4643990929705215s的数据作为整体分析
 
         if (TriggerCount == 0) {
-            vf = new VoiceFeatures[10];
+            vf = new VoiceFeatures[BufferLength];
         }
 
-        if (TriggerCount == 10) {
+        if (TriggerCount == BufferLength) {
             //向前移一位
 
-            for (int i = 0; i < 9; i++) {
+            for (int i = 0; i < BufferLength-1; i++) {
                 vf[i] = vf[i + 1];
             }
-            vf[9] = new VoiceFeatures(data);
-            vf[9].Calc_Energy();
+            vf[BufferLength-1] = new VoiceFeatures(data);
+            vf[BufferLength-1].Calc_Energy();
 
-            for (int i = 0; i < 10; i++) {
+            for (int i = 0; i < BufferLength; i++) {
                 if (vf[i].Energy < 10) {
                     return false;
                 }
             }
-            for (int i = 0; i < 10; i++) {
+            for (int i = 0; i < BufferLength; i++) {
                 if (vf[i].Calc_Zero() < 320 | vf[i].Zero > 560) {
                     return false;
                 }
             }
-            for (int i = 0; i < 10; i++) {
+            for (int i = 0; i < BufferLength; i++) {
                 vf[i].Calc_MaxFrequency();
                 if (vf[i].freq < 4600 | vf[i].freq > 11800) {
-                    Log.e("VoiceAnalyse", "F wrong!" + RevCount + "|" + vf[i].freq);
+//                    Log.e("VoiceAnalyse", "F wrong!" + RevCount + "|" + vf[i].freq);
                     return false;
-                } else if (vf[i].freq > 6200 & vf[i].freq < 7800) {
-                    return false;
+//                } else if (vf[i].freq > 6200 & vf[i].freq < 7800) {
+//                    return false;
                 } else if (vf[i].freq > 9800 & vf[i].freq < 10000) {
                     return false;
                 }
             }
-            Log.e("VoiceAnalyse", "Analyse Bingo" + RevCount);
+//            Log.e("VoiceAnalyse", "Analyse Bingo" + RevCount);
 
             return true;
         } else {

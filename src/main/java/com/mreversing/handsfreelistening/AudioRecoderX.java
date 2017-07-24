@@ -11,11 +11,6 @@ import android.util.Log;
 
 import com.mreversing.handsfreelistening.Utils.myPcmWriter;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -40,7 +35,7 @@ public class AudioRecoderX extends Thread {
     // 缓冲区字节大小
     private int bufferSizeInBytes = 0;
     private AudioRecord audioRecord;
-    private String mDstPath;
+    private String mDstPath="";
     //蓝牙耳机 mreversing
     private AudioManager mAudioManager = null;
 
@@ -100,6 +95,13 @@ public class AudioRecoderX extends Thread {
         this.mAudioManager = nAudioManager;
     }
 
+    public AudioRecoderX(Handler handler, Boolean isBlueToothModel, AudioManager nAudioManager,Handler voiceanalysehandler) {
+        this.handler = handler;
+        this.isBlueToothModel = isBlueToothModel;
+        this.mAudioManager = nAudioManager;
+        this.vahandler=voiceanalysehandler;
+    }
+
     @Override
     public void run() {
         try {
@@ -132,7 +134,9 @@ public class AudioRecoderX extends Thread {
         byte[] audiodata = new byte[bufferSizeInBytes];
         //zuk z1 bufferSizeInBytes值为3584
         myPcmWriter pw= new myPcmWriter(MainActivity.recordPath);
-        pw.initOutputStream();
+        if(mDstPath!=""){
+            pw.initOutputStream();
+        }
 
         int readsize = 0;
         short[] bdata=new short[1024];
@@ -148,7 +152,9 @@ public class AudioRecoderX extends Thread {
             readsize = audioRecord.read(audiodata, 0, bufferSizeInBytes);
             //zuk z1 readsize为 1792*2
             if (AudioRecord.ERROR_INVALID_OPERATION != readsize) {
-                pw.writeData(audiodata);//写入文件
+                if(mDstPath!=""){
+                    pw.writeData(audiodata);//写入文件
+                }
 
                 int i;
 				short[] adata=new short[readsize/2];
@@ -210,7 +216,7 @@ public class AudioRecoderX extends Thread {
                 handler.sendMessage(msg);
             }
         }
-        pw.close();
+        if(mDstPath!=""){pw.close();}
     }
 
     private void release() {

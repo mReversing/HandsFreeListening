@@ -3,6 +3,7 @@ package com.mreversing.handsfreelistening;
 import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
+import android.media.SoundPool;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -20,20 +21,12 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.mreversing.handsfreelistening.Utils.myPcmReader;
 import com.mreversing.handsfreelistening.Utils.myPcmWriter;
 import com.mreversing.handsfreelistening.calc.OptFFT;
 
-import java.io.BufferedInputStream;
-import java.io.DataInputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -70,6 +63,11 @@ public class MainActivity extends BaseActivity {
             }
         });
 
+        //初始化SoundPool
+        mSoundPool= new SoundPool(1,AudioManager.STREAM_SYSTEM,5);
+        mSoundPool.load(this, R.raw.sound1_cut, 1);
+
+
         tvTest1=(TextView)findViewById(R.id.tvTest1);
         tvTest2=(TextView)findViewById(R.id.tvTest2);
         btnTest=(Button)findViewById(R.id.btnTest);
@@ -99,7 +97,6 @@ public class MainActivity extends BaseActivity {
                     while (mVoiceAnalyse.vaHandler==null){
                         //在此等待mVoiceAnalyse.vaHandler初始化完毕
                     }
-
                     mAudioRecoderX=new AudioRecoderX(recordPath,handler,true,(AudioManager)getSystemService(Context.AUDIO_SERVICE),mVoiceAnalyse.vaHandler);
                     mAudioRecoderX.start();
                 }
@@ -142,16 +139,17 @@ public class MainActivity extends BaseActivity {
                     mVoiceAnalyse.quit();
 
                 }else{
-                    mkPCMname();
+
+                    //mkPCMname();
 
                     mVoiceAnalyse=new VoiceAnalyse(handler);
                     mVoiceAnalyse.start();
                     while (mVoiceAnalyse.vaHandler==null){
                         //在此等待mVoiceAnalyse.vaHandler初始化完毕
                     }
-                    mAudioRecoderX=new AudioRecoderX(recordPath,handler,true,(AudioManager)getSystemService(Context.AUDIO_SERVICE),mVoiceAnalyse.vaHandler);
-                    mAudioRecoderX.start();
 
+                    mAudioRecoderX=new AudioRecoderX(handler,true,(AudioManager)getSystemService(Context.AUDIO_SERVICE),mVoiceAnalyse.vaHandler);
+                    mAudioRecoderX.start();
                 }
             }
         });
@@ -233,6 +231,8 @@ public class MainActivity extends BaseActivity {
 				    BingoCount++;
                     tvTest1.setText(Integer.toString(BingoCount));
 					//tvTest1.setText((String)msg.obj);
+                    //播放声效
+                    mSoundPool.play(1, 1, 1, 0, 0, 2);
                     break;
                 case 125806:
 
@@ -277,6 +277,10 @@ public class MainActivity extends BaseActivity {
     };
 	int count=0;
 	int BingoCount=0;
+
+
+    private SoundPool mSoundPool;
+
 
     //记录用户首次点击返回键的时间
 //    private long firstTime=0;
