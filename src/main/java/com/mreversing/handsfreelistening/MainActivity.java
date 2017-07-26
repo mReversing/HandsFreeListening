@@ -192,6 +192,12 @@ public class MainActivity extends BaseActivity {
                 startActivity(intent);
                 return true;
             }
+            case R.id.menu_main_action2:
+            {
+                Intent intent = new Intent(MainActivity.this,FftActivity.class);
+                startActivity(intent);
+                return true;
+            }
             case R.id.menu_main_action0:
             {
                 finish();

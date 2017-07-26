@@ -5,7 +5,7 @@ import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
 
-import com.mreversing.handsfreelistening.calc.OptFFT;
+import com.mreversing.handsfreelistening.calc.VoiceFeatures;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class VoiceAnalyse extends Thread {
 
-    public static int BufferLength=8;
+    public static int BufferLength=6;
     int RevCount = 0;
     private AtomicBoolean mQuit = new AtomicBoolean(false);
 
@@ -42,9 +42,9 @@ public class VoiceAnalyse extends Thread {
             }
         };
         Looper.loop();
-        while (!mQuit.get()) {
-        }
-
+        //从这句话后就不再执行
+        while (!mQuit.get()) {}
+//        Log.e("VoiceAnalyse", "VoiceAnalyse stopped!!!");
     }
 
     private Handler handler;//发送识别成功信息到此Handler
@@ -80,14 +80,14 @@ public class VoiceAnalyse extends Thread {
             vf = new VoiceFeatures[BufferLength];
         }
 
-        if (TriggerCount == BufferLength) {
-            //向前移一位
+        //向前移一位
+        for (int i = 0; i < BufferLength-1; i++) {
+            vf[i] = vf[i + 1];
+        }
+        vf[BufferLength-1] = new VoiceFeatures(data);
+        vf[BufferLength-1].Calc_Energy();
 
-            for (int i = 0; i < BufferLength-1; i++) {
-                vf[i] = vf[i + 1];
-            }
-            vf[BufferLength-1] = new VoiceFeatures(data);
-            vf[BufferLength-1].Calc_Energy();
+        if (TriggerCount == BufferLength-1) {
 
             for (int i = 0; i < BufferLength; i++) {
                 if (vf[i].Energy < 10) {
@@ -99,26 +99,46 @@ public class VoiceAnalyse extends Thread {
                     return false;
                 }
             }
+
+            vf[BufferLength-1].Calc_VoicePeaks();
+            int nums=VoiceFeatures.peakstofound*BufferLength;
+            int[] numbers=new int[nums];
+            int flag=0;
             for (int i = 0; i < BufferLength; i++) {
-                vf[i].Calc_MaxFrequency();
-                if (vf[i].freq < 4600 | vf[i].freq > 11800) {
-//                    Log.e("VoiceAnalyse", "F wrong!" + RevCount + "|" + vf[i].freq);
-                    return false;
-//                } else if (vf[i].freq > 6200 & vf[i].freq < 7800) {
-//                    return false;
-                } else if (vf[i].freq > 9800 & vf[i].freq < 10000) {
-                    return false;
+                if(vf[i].peaks==null){
+                    break;
                 }
+                //综合缓存的几帧数据看，在置信区间外的峰太多就置否
+                for(int j=0;j<VoiceFeatures.peakstofound;j++){
+                    numbers[i*VoiceFeatures.peakstofound+j]=vf[i].peaks[j];
+                }
+            }
+            if(Calc_CountInFreqs(numbers)/nums<0.5){
+                return false;
             }
 //            Log.e("VoiceAnalyse", "Analyse Bingo" + RevCount);
 
             return true;
         } else {
-            vf[TriggerCount] = new VoiceFeatures(data);
-            vf[TriggerCount].Calc_Energy();
             TriggerCount++;
         }
         return false;
+    }
+
+
+    private int Calc_CountInFreqs(int[] data){
+        int counts=0;
+        for(int i=0;i<data.length;i++){
+            if (data[i]>4600 & data[i]<13510){
+                counts++;
+                continue;
+            }
+            else if (data[i]>13500 & data[i]<15500){
+                counts++;
+                continue;
+            }
+        }
+        return counts;
     }
 
     /**
@@ -126,54 +146,7 @@ public class VoiceAnalyse extends Thread {
      */
     public void quit() {
         mQuit.set(true);
+//        Log.e("VoiceAnalyse", "mQuit was set true!!");
     }
 
-    class VoiceFeatures {
-        //一帧所具有的音频特性
-        public short[] data;
-        int Energy;
-        int Zero;
-        int freq;
-
-        public VoiceFeatures(short[] mdata) {
-            data = mdata;
-        }
-
-        public int Calc_Energy() {
-            int EnergyCount = 0;
-            long temp = 0;
-            for (int i = 0; i < data.length; i++) {
-                temp += Math.abs(data[i]);
-                EnergyCount = (int) temp / 1024;
-            }
-            this.Energy = EnergyCount;
-            return Energy;
-        }
-
-        public int Calc_Zero() {
-            int ZeroCount = 0;
-            for (int i = 1; i < data.length; i++) {
-                if (data[i] > 0 & data[i - 1] < 0 | data[i] < 0 & data[i - 1] > 0) {
-                    ZeroCount++;
-                }
-            }
-            Zero = ZeroCount;
-            return Zero;
-        }
-
-        public int Calc_MaxFrequency() {
-            OptFFT op = new OptFFT(data, 44100);
-            op.Calc_FFT();
-            double max = 0;
-            int maxIndex = 0;
-            for (int i = 1; i < op.Calc_FFT_Size / 2; i++) { //这里除以Calc_FFT_Size/2是因为20kHz以上的声音分析不出来（44100/2）
-                if (max < op.getModelfromN(i)) {
-                    max = op.getModelfromN(i);
-                    maxIndex = i;
-                }
-            }
-            freq = op.getFfromN(maxIndex);
-            return freq;
-        }
-    }
 }

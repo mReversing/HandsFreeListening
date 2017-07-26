@@ -3,7 +3,7 @@ package com.mreversing.handsfreelistening;
 import android.util.Log;
 
 import com.mreversing.handsfreelistening.Utils.myPcmReader;
-import com.mreversing.handsfreelistening.calc.OptFFT;
+import com.mreversing.handsfreelistening.calc.VoiceFeatures;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -62,48 +62,35 @@ public class simulateAudioRecoderX {
         return count;
     }
 
+	public static int BufferLength=8;
     int AnalyseCount = 0;//分析次数计数
 
     private int simulateAnalyse(short[] data) {
         AnalyseCount++;
-        OptFFT op = new OptFFT(data, 44100);
-        op.Calc_FFT();
-//            op.Calc_Filter2();
-//            op.Calc_iFFT();
-//
-//            if (new mySimilarityAlgorithm().xzifftcheck(op.getifftResult()) > 80) {
-//                count++;
-//            }
-        double max = 0;
-        int maxIndex = 0;
-        for (int i = 1; i < op.Calc_FFT_Size/2; i++) { //这里除以Calc_FFT_Size/2是因为20kHz以上的声音分析不出来（44100/2）
-            if (max < op.getModelfromN(i)) {
-                max = op.getModelfromN(i);
-                maxIndex = i;
-            }
-        }
-        int maxF = op.getFfromN(maxIndex);
 
-        int ZeroCount = 0;
-        for (int i = 1; i < data.length; i++) {
-            if (data[i] > 0 & data[i - 1] < 0 | data[i] < 0 & data[i - 1] > 0) {
-                ZeroCount++;
-            }
-        }
-
-        int EnergyCount = 0;
-        long temp = 0;
-        for (int i = 0; i < data.length; i++) {
-            temp += Math.abs(data[i]);
-            EnergyCount = (int) temp / 1024;
-        }
-        Boolean Bingo= AnalyseTrigger(maxF,ZeroCount,EnergyCount);
+        Boolean Bingo= AnalyseTrigger(data);
         try {
-            if(Bingo){
-                osw.write(AnalyseCount + ": " + maxF + " | " + ZeroCount + " | " + EnergyCount + " √\n");
-            }else {
-                osw.write(AnalyseCount + ": " + maxF + " | " + ZeroCount + " | " + EnergyCount + "\n");
+            String str="",str0="";
+            str+=AnalyseCount+": ";
+            str+=vf[BufferLength-1].maxFreq + " | " + vf[BufferLength-1].Zero + " | " + vf[BufferLength-1].Energy +" _ ";
+            int[] peaks=vf[BufferLength-1].peaks;
+            for(int i=0;i<VoiceFeatures.peakstofound;i++){
+                str+=peaks[i]+" | ";
             }
+            if(Bingo){
+                str0="√";
+            }else {
+                str0="×";
+            }
+            osw.write(str + str0 + "\n");
+
+//            str+=(int)(vf[BufferLength-1].Calc_modelfromNs(117, 144)*1000/(144-117)/vf[BufferLength-1].Energy)+" | ";
+//            str+=(int)(vf[BufferLength-1].Calc_modelfromNs(175,225)*1000/(225-175)/vf[BufferLength-1].Energy)+" | ";
+//            str+=(int)(vf[BufferLength-1].Calc_modelfromNs(225,265)*1000/(40)/vf[BufferLength-1].Energy)+" | ";
+//            str+=(int)(vf[BufferLength-1].Calc_modelfromNs(300,314)*1000/(14)/vf[BufferLength-1].Energy)+" | ";
+//            str+=(int)(vf[BufferLength-1].Calc_modelfromNs(328,360)*1000/(360-328)/vf[BufferLength-1].Energy)+" | ";
+//            str+=(int)(vf[BufferLength-1].Calc_modelfromNs(0,511)*1000/(511)/vf[BufferLength-1].Energy)+" | ";
+
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -112,69 +99,72 @@ public class simulateAudioRecoderX {
     }
 
 
-    int[][] Trigger;//储存20帧数据
-    int TriggerCount=0;
-    private Boolean AnalyseTrigger(int maxF,int ZeroCount,int EnergyCount) {
-        //检测语音帧的触发器，缓存20个分析后的数据，也就是20*1024/44100=0.4643990929705215s的数据作为整体分析
-        if(Trigger==null){
-            Trigger=new int[20][3];
+    int TriggerCount = 0;
+    VoiceFeatures[] vf;
+    private Boolean AnalyseTrigger(short[] data) {
+        //检测语音帧的触发器，缓存BufferLength个分析后的数据，也就是20*1024/44100=0.4643990929705215s的数据作为整体分析
+
+        if (TriggerCount == 0) {
+            vf = new VoiceFeatures[BufferLength];
         }
-         if(TriggerCount==20){
-             //20个储存满了
-             //先算Energy>30的连续超过12个
-             //再算其中12个ZeroCount>300且<500
-             //12个maxF>4500
+		
+		//向前移一位
+		for (int i = 0; i < BufferLength-1; i++) {
+			vf[i] = vf[i + 1];
+		}
+		vf[BufferLength-1] = new VoiceFeatures(data);
+		vf[BufferLength-1].Calc_Energy();
+		vf[BufferLength-1].Calc_Zero();
+		vf[BufferLength-1].Calc_MaxFrequency();
+        vf[BufferLength-1].Calc_VoicePeaks();
 
-             //向前移一位
+        if (TriggerCount == BufferLength-1) {
 
-             for (int i = 0; i < 19; i++) {
-                 Trigger[i][0]=Trigger[i+1][0];
-                 Trigger[i][1]=Trigger[i+1][1];
-                 Trigger[i][2]=Trigger[i+1][2];
-             }
-             Trigger[19][0]=maxF;
-             Trigger[19][1]=ZeroCount;
-             Trigger[19][2]=EnergyCount;
+            for (int i = 0; i < BufferLength; i++) {
+                if (vf[i].Energy < 10) {
+                    return false;
+                }
+            }
+            for (int i = 0; i < BufferLength; i++) {
+                if (vf[i].Zero < 320 | vf[i].Zero > 560) {
+                    return false;
+                }
+            }
 
-             int BeginIndex=-1;
-
-             for (int i = 0; i < 11; i++) {
-                 for (int j = 0; j < 10; j++) {
-                     if (Trigger[i + j][2] < 10) {
-                         break;
-                     }
-                     if(j==9){
-                         BeginIndex=i;
-                     }
-                 }
-                 if(BeginIndex>=0){
-                    break;
-                 }
-             }
-             if(BeginIndex>=0){
-                 for (int j = BeginIndex; j < BeginIndex+10; j++) {
-                     if (Trigger[j][1] < 330 & Trigger[j][1]>550) {
-                         return false;
-                     }
-                 }
-             }else{return false;}
-             for (int j = BeginIndex; j < BeginIndex+10; j++) {
-                 if (Trigger[j][0] < 4600 |Trigger[j][0]>11800) {
-                     return false;
-                 }
-				 else if(Trigger[j][0]>5900 &Trigger[j][0]<8000){return false;}
-				 else if(Trigger[j][0]>9800 &Trigger[j][0]<10000){return false;}
-				 }
-
-             return true;
-         }else{
-             Trigger[TriggerCount][0]=maxF;
-             Trigger[TriggerCount][1]=ZeroCount;
-             Trigger[TriggerCount][2]=EnergyCount;
-             TriggerCount++;}
+            int nums=VoiceFeatures.peakstofound*BufferLength;
+            int[] numbers=new int[nums];
+            int flag=0;
+            for (int i = 0; i < BufferLength; i++) {
+                //综合缓存的几帧数据看，在置信区间外的峰太多就置否
+                for(int j=0;j<VoiceFeatures.peakstofound;j++){
+                   numbers[i*VoiceFeatures.peakstofound+j]=vf[i].peaks[j];
+                }
+            }
+            if(Calc_CountInFreqs(numbers)/nums<0.6){
+                return false;
+            }
+//            Log.e("VoiceAnalyse", "Analyse Bingo" + RevCount);
+            return true;
+        } else {
+            TriggerCount++;
+        }
         return false;
     }
 
+    private int Calc_CountInFreqs(int[] data){
+        int counts=0;
+        for(int i=0;i<data.length;i++){
+            if (data[i]>4600 & data[i]<13510){
+                counts++;
+                continue;
+            }
+            else if (data[i]>14100 & data[i]<15500){
+                counts++;
+                continue;
+            }
+        }
+        return counts;
+    }
 
     OutputStreamWriter osw;
     FileOutputStream fos;

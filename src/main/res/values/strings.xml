@@ -2,5 +2,6 @@
     <string name="app_name">HandsFreeListening</string>
     <string name="menu_main_action1">Spectrogram</string>
     <string name="menu_main_action0">Exit</string>
+    <string name="menu_main_action2">Settings</string>
 
 </resources>
