@@ -14,7 +14,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class VoiceAnalyse extends Thread {
 
-    public static int BufferLength=6;
+    public static int BufferLength=5; //对判断有较大影响，为6适中
+    public static int spaceLength=40; //中间隔多少帧不算第二次，是两次识别的间隔帧数，事实间隔帧数为spaceLength+BufferLength
     int RevCount = 0;
     private AtomicBoolean mQuit = new AtomicBoolean(false);
 
@@ -51,12 +52,15 @@ public class VoiceAnalyse extends Thread {
     public Handler vaHandler;
 
 
+    int realTriggerCount = 0;
+    int tempReCount = 1-spaceLength;
     private void Analyse(short[] data) {
-        Boolean Bingo = AnalyseTrigger(data);
-        if (Bingo) {
-            if (RevCount - tempReCount > 40) { //50是两次识别的间隔帧
+        if (RevCount - tempReCount > spaceLength) {
+            Boolean Bingo = AnalyseTrigger(data);
+            if (Bingo) {
                 realTriggerCount++;
                 tempReCount = RevCount;
+                TriggerCount = 0;
 
                 //以下为发消息给MainActivity
                 Message msg;
@@ -65,11 +69,10 @@ public class VoiceAnalyse extends Thread {
                 msg.what = 125805;
                 handler.sendMessage(msg);
             }
+        } else {
+            //间隔期，不计算
         }
     }
-
-    int realTriggerCount = 0;
-    int tempReCount = 0;
 
     int TriggerCount = 0;
     VoiceFeatures[] vf;
@@ -113,7 +116,7 @@ public class VoiceAnalyse extends Thread {
                     numbers[i*VoiceFeatures.peakstofound+j]=vf[i].peaks[j];
                 }
             }
-            if(Calc_CountInFreqs(numbers)/nums<0.5){
+            if(Calc_CountInFreqs(numbers)*100/nums<80){
                 return false;
             }
 //            Log.e("VoiceAnalyse", "Analyse Bingo" + RevCount);

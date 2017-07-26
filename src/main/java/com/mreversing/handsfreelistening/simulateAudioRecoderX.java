@@ -62,7 +62,7 @@ public class simulateAudioRecoderX {
         return count;
     }
 
-	public static int BufferLength=8;
+	public static int BufferLength=5;
     int AnalyseCount = 0;//分析次数计数
 
     private int simulateAnalyse(short[] data) {
@@ -140,7 +140,7 @@ public class simulateAudioRecoderX {
                    numbers[i*VoiceFeatures.peakstofound+j]=vf[i].peaks[j];
                 }
             }
-            if(Calc_CountInFreqs(numbers)/nums<0.6){
+            if(Calc_CountInFreqs(numbers)*100/nums<80){
                 return false;
             }
 //            Log.e("VoiceAnalyse", "Analyse Bingo" + RevCount);
@@ -158,7 +158,7 @@ public class simulateAudioRecoderX {
                 counts++;
                 continue;
             }
-            else if (data[i]>14100 & data[i]<15500){
+            else if (data[i]>13500 & data[i]<15500){
                 counts++;
                 continue;
             }

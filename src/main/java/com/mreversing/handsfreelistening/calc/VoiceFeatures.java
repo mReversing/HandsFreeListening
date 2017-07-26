@@ -11,7 +11,7 @@ public class VoiceFeatures {
     public int maxFreq;
     public int peaks[];
     public static int peakspace=5;//前后十个不算在峰内
-    public static int peakstofound=4;//寻找多少个峰
+    public static int peakstofound=5;//寻找多少个峰
     Boolean isConformFreqFeatures=false;
     OptFFT op=null;
 
