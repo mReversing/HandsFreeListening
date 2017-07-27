@@ -5,18 +5,20 @@ package com.mreversing.handsfreelistening.calc;
  */
 public class VoiceFeatures {
     //一帧所具有的音频特性
+    public double samplerate;
     public short[] data;
     public int Energy;
     public int Zero;
     public int maxFreq;
     public int peaks[];
     public static int peakspace=5;//前后十个不算在峰内
-    public static int peakstofound=5;//寻找多少个峰
+    public static int peakstofound=7;//寻找多少个峰
     Boolean isConformFreqFeatures=false;
     OptFFT op=null;
 
-    public VoiceFeatures(short[] mdata) {
+    public VoiceFeatures(short[] mdata,double msamplerate) {
         data = mdata;
+        samplerate=msamplerate;
     }
 
     public int Calc_Energy() {
@@ -24,7 +26,7 @@ public class VoiceFeatures {
         long temp = 0;
         for (int i = 0; i < data.length; i++) {
             temp += Math.abs(data[i]);
-            EnergyCount = (int) temp / 1024;
+            EnergyCount = (int) (temp / data.length);
         }
         this.Energy = EnergyCount;
         return Energy;
@@ -56,34 +58,6 @@ public class VoiceFeatures {
         }
         maxFreq = op.getFfromN(maxIndex);
         return maxFreq;
-    }
-
-    public int[] Calc_modelfromFs(int[] F) {
-        initFftOp();
-        int result[]=new int[F.length];
-        for(int i=0;i<F.length;i++){
-            result[i]=(int)op.getModelfromN(op.getNfromF(F[i]));
-        }
-        return result;
-    }
-
-    public int[] Calc_modelfromNs(int[] N) {
-        initFftOp();
-        int result[]=new int[N.length];
-        for(int i=0;i<N.length;i++){
-            result[i]=(int)op.getModelfromN(N[i]);
-        }
-        return result;
-    }
-
-    public int Calc_modelfromN(int N) {
-        initFftOp();
-        return (int)op.getModelfromN(N);
-    }
-
-    public Boolean Calc_ConformFreqFeatures(){
-        //Calc_modelfromNs(117,144);
-        return false;
     }
 
     public int[] Calc_VoicePeaks(){
@@ -136,7 +110,7 @@ public class VoiceFeatures {
 
     private void initFftOp(){
         if(op==null){
-            op = new OptFFT(data, 44100);
+            op = new OptFFT(data, samplerate);
             op.Calc_FFT();
         }
     }

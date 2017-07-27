@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class VoiceAnalyse extends Thread {
 
-    public static int BufferLength=5; //对判断有较大影响，为6适中
+    public static int BufferLength=6; //对判断有较大影响，为6适中
     public static int spaceLength=40; //中间隔多少帧不算第二次，是两次识别的间隔帧数，事实间隔帧数为spaceLength+BufferLength
     int RevCount = 0;
     private AtomicBoolean mQuit = new AtomicBoolean(false);
@@ -87,7 +87,7 @@ public class VoiceAnalyse extends Thread {
         for (int i = 0; i < BufferLength-1; i++) {
             vf[i] = vf[i + 1];
         }
-        vf[BufferLength-1] = new VoiceFeatures(data);
+        vf[BufferLength-1] = new VoiceFeatures(data,AudioRecoderX.sampleRateInHz);
         vf[BufferLength-1].Calc_Energy();
 
         if (TriggerCount == BufferLength-1) {
@@ -116,7 +116,7 @@ public class VoiceAnalyse extends Thread {
                     numbers[i*VoiceFeatures.peakstofound+j]=vf[i].peaks[j];
                 }
             }
-            if(Calc_CountInFreqs(numbers)*100/nums<80){
+            if(Calc_CountInFreqs(numbers)*100/nums<90){
                 return false;
             }
 //            Log.e("VoiceAnalyse", "Analyse Bingo" + RevCount);

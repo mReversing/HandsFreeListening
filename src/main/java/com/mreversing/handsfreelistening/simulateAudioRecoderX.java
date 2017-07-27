@@ -1,8 +1,10 @@
 package com.mreversing.handsfreelistening;
 
+import android.provider.MediaStore;
 import android.util.Log;
 
 import com.mreversing.handsfreelistening.Utils.myPcmReader;
+import com.mreversing.handsfreelistening.calc.OptFFT;
 import com.mreversing.handsfreelistening.calc.VoiceFeatures;
 
 import java.io.File;
@@ -39,8 +41,9 @@ public class simulateAudioRecoderX {
                 adata[j] = data[j + 1792 * i];
             }
 
-            for (int j = 0; j < adata.length; j++) {
-                bdata[flag] = adata[j];
+//            for (int j = 0; j < adata.length; j++) {
+            for (int j = 0; j < adata.length; j+=8) {
+                    bdata[flag] = adata[j];
                 if (flag == 1024 - 1) {
                     //已集齐1024个数据
                     count = simulateAnalyse(bdata);
@@ -62,35 +65,65 @@ public class simulateAudioRecoderX {
         return count;
     }
 
-	public static int BufferLength=5;
+	public static int BufferLength=6;
     int AnalyseCount = 0;//分析次数计数
 
     private int simulateAnalyse(short[] data) {
         AnalyseCount++;
 
         Boolean Bingo= AnalyseTrigger(data);
-        try {
-            String str="",str0="";
-            str+=AnalyseCount+": ";
-            str+=vf[BufferLength-1].maxFreq + " | " + vf[BufferLength-1].Zero + " | " + vf[BufferLength-1].Energy +" _ ";
-            int[] peaks=vf[BufferLength-1].peaks;
-            for(int i=0;i<VoiceFeatures.peakstofound;i++){
-                str+=peaks[i]+" | ";
-            }
+        String str="",str0="",str1="";
+
+
+
+        //str+=AnalyseCount+": ";
+        str+=vf[BufferLength-1].maxFreq + " | " + vf[BufferLength-1].Zero + " | " + vf[BufferLength-1].Energy +" _ ";
+//        int[] peaks=vf[BufferLength-1].peaks;
+//        for(int i=0;i<VoiceFeatures.peakstofound;i++){
+//            str+=peaks[i]+" | ";
+//        }
+        OptFFT op = new OptFFT(vf[BufferLength-1].data, AudioRecoderX.sampleRateInHz/8);
+        op.Calc_FFT();
+        double[] mA =new double[op.Calc_FFT_Size / 2];
+        for (int i = 0; i < op.Calc_FFT_Size / 2; i++) {
+            mA[i]=op.getModelfromN(i);
+        }
+        for (int i = 0; i < op.Calc_FFT_Size / 2; i++) {
+            str1 += " | " + (int) mA[i];
+        }
+        str1+="_ ";
+//        short[] cdata=new short[128];
+//        for(int i=0;i<128;i++){
+//            for(int j=0;j<8;j++){
+//                cdata[i]+=vf[BufferLength-1].data[i*8+j];
+//            }
+//            cdata[i]+=vf[BufferLength-1].data[i*8];
+//        }
+//        VoiceFeatures vf2=new VoiceFeatures(cdata,AudioRecoderX.sampleRateInHz/8/8);
+//        vf2.Calc_VoicePeaks();
+//        int[] peaks2=vf2.peaks;
+//        for(int i=0;i<VoiceFeatures.peakstofound;i++){
+//            str1+=peaks2[i]+" | ";
+//        }
+
+//        OptFFT op = new OptFFT(cdata, AudioRecoderX.sampleRateInHz/8);
+//        op.Calc_FFT();
+//        double[] mA =new double[op.Calc_FFT_Size / 2];
+//        for (int i = 0; i < op.Calc_FFT_Size / 2; i++) {
+//            mA[i]=op.getModelfromN(i);
+//        }
+//        for (int i = 0; i < op.Calc_FFT_Size / 2; i++) {
+//            str1+=" | " +(int)mA[i];
+//        }
+
             if(Bingo){
-                str0="√";
-            }else {
-                str0="×";
-            }
-            osw.write(str + str0 + "\n");
+            str0="√";
+        }else {
+            str0="×";
+        }
 
-//            str+=(int)(vf[BufferLength-1].Calc_modelfromNs(117, 144)*1000/(144-117)/vf[BufferLength-1].Energy)+" | ";
-//            str+=(int)(vf[BufferLength-1].Calc_modelfromNs(175,225)*1000/(225-175)/vf[BufferLength-1].Energy)+" | ";
-//            str+=(int)(vf[BufferLength-1].Calc_modelfromNs(225,265)*1000/(40)/vf[BufferLength-1].Energy)+" | ";
-//            str+=(int)(vf[BufferLength-1].Calc_modelfromNs(300,314)*1000/(14)/vf[BufferLength-1].Energy)+" | ";
-//            str+=(int)(vf[BufferLength-1].Calc_modelfromNs(328,360)*1000/(360-328)/vf[BufferLength-1].Energy)+" | ";
-//            str+=(int)(vf[BufferLength-1].Calc_modelfromNs(0,511)*1000/(511)/vf[BufferLength-1].Energy)+" | ";
-
+        try {
+            osw.write(str+ str1 + str0 + "\n");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -112,7 +145,7 @@ public class simulateAudioRecoderX {
 		for (int i = 0; i < BufferLength-1; i++) {
 			vf[i] = vf[i + 1];
 		}
-		vf[BufferLength-1] = new VoiceFeatures(data);
+		vf[BufferLength-1] = new VoiceFeatures(data,AudioRecoderX.sampleRateInHz/8);
 		vf[BufferLength-1].Calc_Energy();
 		vf[BufferLength-1].Calc_Zero();
 		vf[BufferLength-1].Calc_MaxFrequency();
