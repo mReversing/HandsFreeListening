@@ -41,8 +41,8 @@ public class simulateAudioRecoderX {
                 adata[j] = data[j + 1792 * i];
             }
 
-//            for (int j = 0; j < adata.length; j++) {
-            for (int j = 0; j < adata.length; j+=8) {
+           for (int j = 0; j < adata.length; j++) {//44100Hz
+           // for (int j = 0; j < adata.length; j+=16) { //44100/8Hz
                     bdata[flag] = adata[j];
                 if (flag == 1024 - 1) {
                     //已集齐1024个数据
@@ -65,69 +65,40 @@ public class simulateAudioRecoderX {
         return count;
     }
 
-	public static int BufferLength=6;
+	public static int BufferLength=8;
     int AnalyseCount = 0;//分析次数计数
 
     private int simulateAnalyse(short[] data) {
         AnalyseCount++;
 
-        Boolean Bingo= AnalyseTrigger(data);
-        String str="",str0="",str1="";
-
-
+        Boolean Bingo = AnalyseTrigger(data);
+        String str = "", str0 = "", str1 = "";
 
         //str+=AnalyseCount+": ";
-        str+=vf[BufferLength-1].maxFreq + " | " + vf[BufferLength-1].Zero + " | " + vf[BufferLength-1].Energy +" _ ";
-//        int[] peaks=vf[BufferLength-1].peaks;
-//        for(int i=0;i<VoiceFeatures.peakstofound;i++){
-//            str+=peaks[i]+" | ";
-//        }
-        OptFFT op = new OptFFT(vf[BufferLength-1].data, AudioRecoderX.sampleRateInHz/8);
-        op.Calc_FFT();
-        double[] mA =new double[op.Calc_FFT_Size / 2];
-        for (int i = 0; i < op.Calc_FFT_Size / 2; i++) {
-            mA[i]=op.getModelfromN(i);
+        str += vf[BufferLength - 1].maxFreq + " | " + vf[BufferLength - 1].Zero + " | " + vf[BufferLength - 1].Energy + " _ ";
+        //正常输出44100Hz的峰
+        int[] peaks=vf[BufferLength-1].peaks;
+        for(int i=0;i<VoiceFeatures.peakstofound;i++){
+            str+=" | " + peaks[i];
         }
-        for (int i = 0; i < op.Calc_FFT_Size / 2; i++) {
-            str1 += " | " + (int) mA[i];
-        }
-        str1+="_ ";
-//        short[] cdata=new short[128];
-//        for(int i=0;i<128;i++){
-//            for(int j=0;j<8;j++){
-//                cdata[i]+=vf[BufferLength-1].data[i*8+j];
-//            }
-//            cdata[i]+=vf[BufferLength-1].data[i*8];
-//        }
-//        VoiceFeatures vf2=new VoiceFeatures(cdata,AudioRecoderX.sampleRateInHz/8/8);
-//        vf2.Calc_VoicePeaks();
-//        int[] peaks2=vf2.peaks;
-//        for(int i=0;i<VoiceFeatures.peakstofound;i++){
-//            str1+=peaks2[i]+" | ";
+
+//        double[] mA = vf[BufferLength - 1].Calc_AllFreq();
+//        for (int i = 0; i < mA.length; i++) {
+//            str1 += " | " + (int) mA[i];
 //        }
 
-//        OptFFT op = new OptFFT(cdata, AudioRecoderX.sampleRateInHz/8);
-//        op.Calc_FFT();
-//        double[] mA =new double[op.Calc_FFT_Size / 2];
-//        for (int i = 0; i < op.Calc_FFT_Size / 2; i++) {
-//            mA[i]=op.getModelfromN(i);
-//        }
-//        for (int i = 0; i < op.Calc_FFT_Size / 2; i++) {
-//            str1+=" | " +(int)mA[i];
-//        }
-
-            if(Bingo){
-            str0="√";
-        }else {
-            str0="×";
+        str1 += " | _ ";
+        if (Bingo) {
+            str0 = "√";
+        } else {
+            str0 = "×";
         }
 
         try {
-            osw.write(str+ str1 + str0 + "\n");
+            osw.write(str + str1 + str0 + "\n");
         } catch (IOException e) {
             e.printStackTrace();
         }
-
         return 0;
     }
 
@@ -145,8 +116,9 @@ public class simulateAudioRecoderX {
 		for (int i = 0; i < BufferLength-1; i++) {
 			vf[i] = vf[i + 1];
 		}
-		vf[BufferLength-1] = new VoiceFeatures(data,AudioRecoderX.sampleRateInHz/8);
-		vf[BufferLength-1].Calc_Energy();
+		vf[BufferLength-1] = new VoiceFeatures(data,AudioRecoderX.sampleRateInHz);
+//        vf[BufferLength-1] = new VoiceFeatures(data,AudioRecoderX.sampleRateInHz/8);
+        vf[BufferLength-1].Calc_Energy();
 		vf[BufferLength-1].Calc_Zero();
 		vf[BufferLength-1].Calc_MaxFrequency();
         vf[BufferLength-1].Calc_VoicePeaks();
@@ -159,7 +131,7 @@ public class simulateAudioRecoderX {
                 }
             }
             for (int i = 0; i < BufferLength; i++) {
-                if (vf[i].Zero < 320 | vf[i].Zero > 560) {
+                if (vf[i].Zero < 320 | vf[i].Zero > 600) {
                     return false;
                 }
             }
@@ -173,7 +145,7 @@ public class simulateAudioRecoderX {
                    numbers[i*VoiceFeatures.peakstofound+j]=vf[i].peaks[j];
                 }
             }
-            if(Calc_CountInFreqs(numbers)*100/nums<80){
+            if(Calc_PercentInFreqs(numbers)<90){
                 return false;
             }
 //            Log.e("VoiceAnalyse", "Analyse Bingo" + RevCount);
@@ -184,8 +156,9 @@ public class simulateAudioRecoderX {
         return false;
     }
 
-    private int Calc_CountInFreqs(int[] data){
+    private int Calc_PercentInFreqs(int[] data){
         int counts=0;
+        int flag=0;
         for(int i=0;i<data.length;i++){
             if (data[i]>4600 & data[i]<13510){
                 counts++;
@@ -194,9 +167,14 @@ public class simulateAudioRecoderX {
             else if (data[i]>13500 & data[i]<15500){
                 counts++;
                 continue;
+            }else if (data[i]<220) {
+                flag++;
             }
         }
-        return counts;
+        if(flag==data.length){
+            return 0;
+        }
+        return counts*100/(data.length-flag);
     }
 
     OutputStreamWriter osw;

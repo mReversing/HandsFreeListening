@@ -151,6 +151,9 @@ public class AudioRecoderX extends Thread {
         while (!mQuit.get()) {
             readsize = audioRecord.read(audiodata, 0, bufferSizeInBytes);
             //zuk z1 readsize为 1792*2
+            if(readsize==0){
+                //这里容易报错，程序意外终止，activity重刷了
+            }
             if (AudioRecord.ERROR_INVALID_OPERATION != readsize) {
                 if(mDstPath!=""){
                     pw.writeData(audiodata);//写入文件
@@ -162,12 +165,14 @@ public class AudioRecoderX extends Thread {
                 long total=0;
                 for(i=0;i<readsize/2;i++){
                         // 每16位读取一个音频数据
-                    temp= (short) (((audiodata[2*i] & 0xff) << 8) | (audiodata[2*i+1] & 0xff));
+                    temp= (short) (((audiodata[2*i+1] & 0xff) << 8) | (audiodata[2*i] & 0xff));
+                   // temp= (short) (((audiodata[2*i] & 0xff) << 8) | (audiodata[2*i+1] & 0xff));
+                    //这里将高低位弄反了，version 0.0.1.3才发现
                     adata[i]=temp;
                     total+=Math.abs(temp);
                 }
 
-                total=(int)total/readsize*2;//算出平均值，峰值是65536/4
+                total=(int)(total*2/readsize);//算出平均值，峰值是65536/4
                 //Log.e(TAG, "|"+p+"|");
                 msg = Message.obtain();
                 msg.obj = "average: "+total+" ";

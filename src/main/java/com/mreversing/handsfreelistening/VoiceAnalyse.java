@@ -14,8 +14,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class VoiceAnalyse extends Thread {
 
-    public static int BufferLength=6; //对判断有较大影响，为6适中
-    public static int spaceLength=40; //中间隔多少帧不算第二次，是两次识别的间隔帧数，事实间隔帧数为spaceLength+BufferLength
+    public static int BufferLength=8; //对判断有较大影响，为6适中
+    public static int spaceLength=20; //中间隔多少帧不算第二次，是两次识别的间隔帧数，事实间隔帧数为spaceLength+BufferLength
     int RevCount = 0;
     private AtomicBoolean mQuit = new AtomicBoolean(false);
 
@@ -72,6 +72,7 @@ public class VoiceAnalyse extends Thread {
         } else {
             //间隔期，不计算
         }
+//        Log.e("VoiceAnalyse", "count: "+RevCount);
     }
 
     int TriggerCount = 0;
@@ -88,6 +89,7 @@ public class VoiceAnalyse extends Thread {
             vf[i] = vf[i + 1];
         }
         vf[BufferLength-1] = new VoiceFeatures(data,AudioRecoderX.sampleRateInHz);
+        //        vf[BufferLength-1] = new VoiceFeatures(data,AudioRecoderX.sampleRateInHz/8);
         vf[BufferLength-1].Calc_Energy();
 
         if (TriggerCount == BufferLength-1) {
@@ -98,10 +100,11 @@ public class VoiceAnalyse extends Thread {
                 }
             }
             for (int i = 0; i < BufferLength; i++) {
-                if (vf[i].Calc_Zero() < 320 | vf[i].Zero > 560) {
+                if (vf[i].Calc_Zero() < 320 | vf[i].Zero > 600) {
                     return false;
                 }
             }
+            Log.e("VoiceAnalyse", "Ready!!" + RevCount);
 
             vf[BufferLength-1].Calc_VoicePeaks();
             int nums=VoiceFeatures.peakstofound*BufferLength;
@@ -116,10 +119,12 @@ public class VoiceAnalyse extends Thread {
                     numbers[i*VoiceFeatures.peakstofound+j]=vf[i].peaks[j];
                 }
             }
-            if(Calc_CountInFreqs(numbers)*100/nums<90){
+            if(Calc_PercentInFreqs(numbers)<90){
+                //强烈的嘶声这里大于95过不去，估计低频太多
                 return false;
             }
-//            Log.e("VoiceAnalyse", "Analyse Bingo" + RevCount);
+            //TODO: 再加一个方法，对嘶声频率作进一步群体判断
+            Log.e("VoiceAnalyse", "Analyse Bingo!!" + RevCount);
 
             return true;
         } else {
@@ -129,8 +134,9 @@ public class VoiceAnalyse extends Thread {
     }
 
 
-    private int Calc_CountInFreqs(int[] data){
+    private int Calc_PercentInFreqs(int[] data){
         int counts=0;
+        int flag=0;
         for(int i=0;i<data.length;i++){
             if (data[i]>4600 & data[i]<13510){
                 counts++;
@@ -139,9 +145,14 @@ public class VoiceAnalyse extends Thread {
             else if (data[i]>13500 & data[i]<15500){
                 counts++;
                 continue;
+            }else if (data[i]<220) {
+                flag++;
             }
+            }
+        if(flag==data.length){
+            return 0;
         }
-        return counts;
+        return counts*100/(data.length-flag);
     }
 
     /**

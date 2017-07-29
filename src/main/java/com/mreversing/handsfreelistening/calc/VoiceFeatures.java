@@ -12,7 +12,7 @@ public class VoiceFeatures {
     public int maxFreq;
     public int peaks[];
     public static int peakspace=5;//前后十个不算在峰内
-    public static int peakstofound=7;//寻找多少个峰
+    public static int peakstofound=9;//寻找多少个峰
     Boolean isConformFreqFeatures=false;
     OptFFT op=null;
 
@@ -26,8 +26,8 @@ public class VoiceFeatures {
         long temp = 0;
         for (int i = 0; i < data.length; i++) {
             temp += Math.abs(data[i]);
-            EnergyCount = (int) (temp / data.length);
         }
+        EnergyCount = (int) (temp / data.length);
         this.Energy = EnergyCount;
         return Energy;
     }
@@ -154,5 +154,14 @@ public class VoiceFeatures {
             }
         }
         return indexArry;
+    }
+
+    public double[] Calc_AllFreq() {
+        initFftOp();
+        double[] mA =new double[op.Calc_FFT_Size / 2];
+        for (int i = 0; i < op.Calc_FFT_Size / 2; i++) { //这里除以Calc_FFT_Size/2是因为20kHz以上的声音分析不出来（44100/2）
+            mA[i]=op.getModelfromN(i);
+        }
+        return mA;
     }
 }
