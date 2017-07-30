@@ -78,7 +78,7 @@ public class simulateAudioRecoderX {
         str += vf[BufferLength - 1].maxFreq + " | " + vf[BufferLength - 1].Zero + " | " + vf[BufferLength - 1].Energy + " _ ";
         //正常输出44100Hz的峰
         int[] peaks=vf[BufferLength-1].peaks;
-        for(int i=0;i<VoiceFeatures.peakstofound;i++){
+        for(int i=0;i<vf[BufferLength-1].peakstofound;i++){
             str+=" | " + peaks[i];
         }
 
@@ -131,18 +131,17 @@ public class simulateAudioRecoderX {
                 }
             }
             for (int i = 0; i < BufferLength; i++) {
-                if (vf[i].Zero < 320 | vf[i].Zero > 600) {
+                if (vf[i].Zero < 290 | vf[i].Zero > 600) {
                     return false;
                 }
             }
 
-            int nums=VoiceFeatures.peakstofound*BufferLength;
+            int nums=vf[BufferLength-1].peakstofound*BufferLength;
             int[] numbers=new int[nums];
-            int flag=0;
             for (int i = 0; i < BufferLength; i++) {
                 //综合缓存的几帧数据看，在置信区间外的峰太多就置否
-                for(int j=0;j<VoiceFeatures.peakstofound;j++){
-                   numbers[i*VoiceFeatures.peakstofound+j]=vf[i].peaks[j];
+                for(int j=0;j<vf[BufferLength-1].peakstofound;j++){
+                   numbers[i*vf[BufferLength-1].peakstofound+j]=vf[i].peaks[j];
                 }
             }
             if(Calc_PercentInFreqs(numbers)<90){

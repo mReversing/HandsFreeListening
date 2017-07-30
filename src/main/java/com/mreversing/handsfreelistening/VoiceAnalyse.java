@@ -100,23 +100,22 @@ public class VoiceAnalyse extends Thread {
                 }
             }
             for (int i = 0; i < BufferLength; i++) {
-                if (vf[i].Calc_Zero() < 320 | vf[i].Zero > 600) {
+                if (vf[i].Calc_Zero() < 290 | vf[i].Zero > 600) {
                     return false;
                 }
             }
             Log.e("VoiceAnalyse", "Ready!!" + RevCount);
 
             vf[BufferLength-1].Calc_VoicePeaks();
-            int nums=VoiceFeatures.peakstofound*BufferLength;
+            int nums=vf[BufferLength-1].peakstofound*BufferLength;
             int[] numbers=new int[nums];
-            int flag=0;
             for (int i = 0; i < BufferLength; i++) {
                 if(vf[i].peaks==null){
                     break;
                 }
                 //综合缓存的几帧数据看，在置信区间外的峰太多就置否
-                for(int j=0;j<VoiceFeatures.peakstofound;j++){
-                    numbers[i*VoiceFeatures.peakstofound+j]=vf[i].peaks[j];
+                for(int j=0;j<vf[BufferLength-1].peakstofound;j++){
+                    numbers[i*vf[BufferLength-1].peakstofound+j]=vf[i].peaks[j];
                 }
             }
             if(Calc_PercentInFreqs(numbers)<90){
@@ -124,6 +123,8 @@ public class VoiceAnalyse extends Thread {
                 return false;
             }
             //TODO: 再加一个方法，对嘶声频率作进一步群体判断
+
+
             Log.e("VoiceAnalyse", "Analyse Bingo!!" + RevCount);
 
             return true;
