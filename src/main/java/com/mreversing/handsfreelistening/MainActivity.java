@@ -31,6 +31,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class MainActivity extends BaseActivity {
+    //// TODO: 2017/7/30 为程序添加日志 
     private static final String TAG = "MainActivity";
     AudioRecoderX mAudioRecoderX;
     VoiceAnalyse mVoiceAnalyse;

@@ -86,6 +86,8 @@ public class simulateAudioRecoderX {
 //        for (int i = 0; i < mA.length; i++) {
 //            str1 += " | " + (int) mA[i];
 //        }
+        str+=" | ";
+        str+=vf[BufferLength-1].modelsPercent+"%";
 
         str1 += " | _ ";
         if (Bingo) {
@@ -121,17 +123,30 @@ public class simulateAudioRecoderX {
         vf[BufferLength-1].Calc_Energy();
 		vf[BufferLength-1].Calc_Zero();
 		vf[BufferLength-1].Calc_MaxFrequency();
+        vf[BufferLength-1].Calc_modelsumfromFs(7500, 11800);
+        vf[BufferLength-1].Calc_modelsPercentfromFs(7500, 11800);
         vf[BufferLength-1].Calc_VoicePeaks();
 
         if (TriggerCount == BufferLength-1) {
 
             for (int i = 0; i < BufferLength; i++) {
-                if (vf[i].Energy < 10) {
+                if (vf[i].Energy < 9) {
                     return false;
                 }
             }
             for (int i = 0; i < BufferLength; i++) {
-                if (vf[i].Zero < 290 | vf[i].Zero > 600) {
+                if (vf[i].Zero < 220 | vf[i].Zero > 600) {
+                    return false;
+                }
+            }
+
+            for (int i = 0; i < BufferLength; i++) {
+                if (vf[i].modelsum < 30) {
+                    return false;
+                }
+            }
+            for (int i = 0; i < BufferLength; i++) {
+                if (vf[i].modelsPercent < 37 | vf[i].modelsPercent > 90) {
                     return false;
                 }
             }
@@ -144,9 +159,10 @@ public class simulateAudioRecoderX {
                    numbers[i*vf[BufferLength-1].peakstofound+j]=vf[i].peaks[j];
                 }
             }
-            if(Calc_PercentInFreqs(numbers)<90){
+            if(Calc_PercentInFreqs(numbers)<80){
                 return false;
             }
+
 //            Log.e("VoiceAnalyse", "Analyse Bingo" + RevCount);
             return true;
         } else {

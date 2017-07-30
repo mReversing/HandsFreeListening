@@ -13,7 +13,8 @@ public class VoiceFeatures {
     public int peaks[];
     public int peakspace=5;//前后十个不算在峰内
     public int peakstofound=8;//寻找多少个峰
-    Boolean isConformFreqFeatures=false;
+    public int modelsPercent;
+    public int modelsum;
     OptFFT op=null;
 
     public VoiceFeatures(short[] mdata,double msamplerate) {
@@ -154,6 +155,35 @@ public class VoiceFeatures {
             }
         }
         return indexArry;
+    }
+
+    public int Calc_modelsPercentfromFs(int minF,int maxF) {
+        initFftOp();
+        int minN=op.getNfromF(minF);
+        int maxN=op.getNfromF(maxF);
+        int sum_models=0;
+        for(int i=minN;i<maxN;i++){
+            sum_models+=(int)op.getModelfromN(i);
+        }
+        //// TODO: 2017/7/30 对上面几句优化 
+        int sum_Allmodels=0;
+        for(int i = 0; i < op.Calc_FFT_Size / 2; i++) {
+            sum_Allmodels+=op.getModelfromN(i);
+        }
+        modelsPercent=sum_models*100/sum_Allmodels;
+        return modelsPercent;
+    }
+
+    public int Calc_modelsumfromFs(int minF,int maxF) {
+        initFftOp();
+        int minN=op.getNfromF(minF);
+        int maxN=op.getNfromF(maxF);
+        int sum_models=0;
+        for(int i=minN;i<maxN;i++){
+            sum_models+=(int)op.getModelfromN(i);
+        }
+        modelsum=sum_models;
+        return modelsum;
     }
 
     public double[] Calc_AllFreq() {

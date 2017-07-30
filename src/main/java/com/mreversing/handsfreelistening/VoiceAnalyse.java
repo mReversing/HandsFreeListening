@@ -95,38 +95,61 @@ public class VoiceAnalyse extends Thread {
         if (TriggerCount == BufferLength-1) {
 
             for (int i = 0; i < BufferLength; i++) {
-                if (vf[i].Energy < 10) {
+                if (vf[i].Energy < 9) {
                     return false;
                 }
             }
             for (int i = 0; i < BufferLength; i++) {
-                if (vf[i].Calc_Zero() < 290 | vf[i].Zero > 600) {
+                if (vf[i].Calc_Zero() < 220 | vf[i].Zero > 600) {
                     return false;
                 }
             }
-            Log.e("VoiceAnalyse", "Ready!!" + RevCount);
+//            Log.e("VoiceAnalyse", "Calc_FFT Ready!!" + RevCount);
 
+
+
+            vf[BufferLength-1].Calc_modelsumfromFs(7500, 11800);
+            for (int i = 0; i < BufferLength; i++) {
+                if(vf[i].modelsum==0){
+                    return false;
+                }
+                if (vf[i].modelsum < 30) {
+                    Log.e("VoiceAnalyse", vf[i].modelsum+"modelssum wrong!!!! " + RevCount);
+                    return false;
+                }
+            }
+
+            vf[BufferLength-1].Calc_modelsPercentfromFs(7500,11800);
+            for (int i = 0; i < BufferLength; i++) {
+                if(vf[i].modelsPercent==0){
+                    return false;
+                }
+                if (vf[i].modelsPercent < 37 | vf[i].modelsPercent > 90) {
+                    Log.e("VoiceAnalyse",vf[i].modelsPercent+ "modelsPercent wrong!! " + RevCount);
+                    return false;
+                }
+            }
+
+            //TODO: 再加一个方法，对嘶声频率作进一步群体判断
             vf[BufferLength-1].Calc_VoicePeaks();
             int nums=vf[BufferLength-1].peakstofound*BufferLength;
             int[] numbers=new int[nums];
             for (int i = 0; i < BufferLength; i++) {
                 if(vf[i].peaks==null){
-                    break;
+                    return false;
                 }
                 //综合缓存的几帧数据看，在置信区间外的峰太多就置否
                 for(int j=0;j<vf[BufferLength-1].peakstofound;j++){
                     numbers[i*vf[BufferLength-1].peakstofound+j]=vf[i].peaks[j];
                 }
             }
-            if(Calc_PercentInFreqs(numbers)<90){
+            if(Calc_PercentInFreqs(numbers)<80){
                 //强烈的嘶声这里大于95过不去，估计低频太多
+                Log.e("VoiceAnalyse","PercentInFreqs wrong!! " + RevCount);
                 return false;
             }
-            //TODO: 再加一个方法，对嘶声频率作进一步群体判断
 
-
-            Log.e("VoiceAnalyse", "Analyse Bingo!!" + RevCount);
-
+//            Log.e("VoiceAnalyse", "Analyse Bingo!!" + RevCount);
             return true;
         } else {
             TriggerCount++;
